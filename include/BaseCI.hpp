@@ -21,6 +21,8 @@ protected:
 
     const size_t dim;  // the dimension of the CI space
 
+    Eigen::VectorXd diagonal;  // the diagonal of the Hamiltonian matrix
+
 
     // PROTECTED CONSTRUCTORS
     /**
@@ -41,9 +43,9 @@ protected:
     virtual Eigen::VectorXd matrixVectorProduct(const Eigen::VectorXd& x) = 0;
 
     /**
-     *  @return the diagonal of the matrix representation of the Hamiltonian.
+     *  @set the diagonal of the matrix representation of the Hamiltonian.
      */
-    virtual Eigen::VectorXd calculateDiagonal() = 0;
+    virtual void calculateDiagonal() = 0;
 
 
     // PROTECTED METHODS
@@ -61,6 +63,7 @@ public:
 
 
     // GETTERS
+    size_t get_dim() const { return this->dim; }
     double get_eigenvalue() const { return this->eigensolver_ptr->get_eigenvalue(); }
     Eigen::VectorXd get_eigenvector() const { return this->eigensolver_ptr->get_eigenvector(); }
 

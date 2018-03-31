@@ -122,14 +122,11 @@ namespace ci {
     abstract class BaseCI {
         __ protected members __
             # libwint::SOBasis& so_basis
+            # numopt::eigenproblem::BaseEigenproblemSolver* eigensolver_ptr = nullptr
 
-            # size_t dim = 0
-            # bmqc::AddressingScheme* addressing_scheme_ptr = nullptr
-            # numopt::BaseSolver* solver_ptr = nullptr
+            # const size_t dim
 
-            # bool is_solved = false
-            # double eigenvalue
-            # Eigen::VectorXd eigenvector
+            # Eigen::VectorXd diagonal
         == protected constructors ==
             # explicit **BaseCI**(libwint::SOBasis& so_basis)
         __ protected pure virtual methods __
@@ -141,6 +138,7 @@ namespace ci {
         == destructor ==
             virtual **~BaseCI**()
         __ public methods __
+            + size_t **get_dim**() const
             + double **get_eigenvalue**() const
             + Eigen::VectorXd **get_eigenvector**() const
 
@@ -157,6 +155,7 @@ namespace ci {
         __ private members __
             - const size_t K
             - const size_t N_P
+            - const bmqc::AddressingScheme addressing_scheme
         __ private methods __
             - void **constructHamiltonian**(ci::solver::MatrixSolver* matrix_solver) override
             - Eigen::VectorXd **matrixVectorProduct**() override

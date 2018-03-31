@@ -20,7 +20,8 @@ namespace ci {
  */
 BaseCI::BaseCI(libwint::SOBasis& so_basis, size_t dim) :
     so_basis (so_basis),
-    dim (dim)
+    dim (dim),
+    diagonal (Eigen::VectorXd::Zero(this->dim))
 {}
 
 
@@ -61,6 +62,10 @@ BaseCI::~BaseCI() {
  */
 void BaseCI::solve(numopt::eigenproblem::SolverType solver_type) {
 
+    // Before solving anything, we should calculate the diagonal
+    this->calculateDiagonal();
+
+
     // Depending on how the user wants to solve the eigenvalue problem, construct the appropriate solver
     switch (solver_type) {
 
@@ -83,13 +88,17 @@ void BaseCI::solve(numopt::eigenproblem::SolverType solver_type) {
         }
 
         case numopt::eigenproblem::SolverType::DAVIDSON: {
+
             numopt::VectorFunction matrixVectorProduct = [this] (const Eigen::VectorXd& x) { return this->matrixVectorProduct(x); };
-            Eigen::VectorXd diagonal = this->calculateDiagonal();
 
+            // HARTREE-FOCK INITIAL GUESS
             Eigen::VectorXd t_0 = Eigen::VectorXd::Zero(this->dim);
-            t_0(this->dim) = 1;  // in reverse lexical notation, the Hartree-Fock determinant has the highest address
+            t_0(this->dim-1) = 1;  // in reverse lexical notation, the Hartree-Fock determinant has the highest address
 
-            this->eigensolver_ptr = new numopt::eigenproblem::DavidsonSolver(matrixVectorProduct, t_0, diagonal);
+            // RANDOM INITIAL GUESS
+//            Eigen::VectorXd t_0 = Eigen::VectorXd::Random(this->dim);
+
+            this->eigensolver_ptr = new numopt::eigenproblem::DavidsonSolver(matrixVectorProduct, this->diagonal, t_0);  // the diagonal has been calculated in the beginning of this method
             this->eigensolver_ptr->solve();
             break;
         }

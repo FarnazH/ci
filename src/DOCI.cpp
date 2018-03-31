@@ -7,6 +7,10 @@
 
 
 
+#include <chrono>
+
+
+
 namespace ci {
 
 
@@ -21,52 +25,39 @@ void DOCI::constructHamiltonian(numopt::eigenproblem::BaseMatrixSolver* matrix_s
 
     // Create the first spin string. Since in DOCI, alpha == beta, we can just treat them as one.
     // TODO: determine when to switch from unsigned to unsigned long, unsigned long long or boost::dynamic_bitset<>
-    bmqc::SpinString<unsigned long> spin_string (0, this->addressing_scheme);  // spin string with address 0
+    bmqc::SpinString<unsigned long> spin_string(0, this->addressing_scheme);  // spin string with address 0
+
 
     for (size_t I = 0; I < this->dim; I++) {  // I loops over all the addresses of the spin strings
-        if (I > 0) {
-            spin_string.nextPermutation();
-        }
+
+        // Diagonal contribution
+        matrix_solver->addToMatrix(this->diagonal(I), I, I);
+
+        // Off-diagonal contribution
         for (size_t p = 0; p < this->K; p++) {  // p loops over SOs
-            if (spin_string.annihilate(p)) { // single excitation
-                //A single excitation in doci can only be done in place.
-                //Exciting only one electron to a vacant SO, will break the double occupancy(not part of the basis).
-                double one_int = this->so_basis.get_h_SO(p,p);
-                matrix_solver->addToMatrix(2 * one_int, I, I); //Twice : alpha and beta.
-                //There are also two in-place double excitations of abba en baab combination.
-                double two_int = this->so_basis.get_g_SO(p,p,p,p);
-                matrix_solver->addToMatrix(two_int, I, I);
+            if (spin_string.isOccupied(p)) {  // if p in I
+                for (size_t q = 0; q < p; q++) {  // q loops over SOs
+                    if (!spin_string.isOccupied(q)) {  // if q not in I
 
-                for(size_t q = 0; q < p; q++){// q loops over SOs creation l=j is covered in the first loop and since we can't annihilate twice this combination would be redundant.
-                    if (spin_string.create(q)){ //we can never excite a single electron to a new site we have to do it in pairs.
-                        size_t address = spin_string.address(this->addressing_scheme);
-                        //integrals parameters are entered in chemical notation!
-                        // This means that first 2 parameters are for the first electrons and subsequent ones are for the second
-                        //Multiply by 2 getting rid of 1/2 two electron term because we have 2 equal combinations:
-                        //abba and baab. We do not correct for the truncated SO iteration because we only calculate the lower triagonal.
-                        //and then copy accordingly
-                        double mix_spin_two_int = this->so_basis.get_g_SO(p,q,p,q);
-                        matrix_solver->addToMatrix(mix_spin_two_int, I, address);
-                        matrix_solver->addToMatrix(mix_spin_two_int, address, I);
+                        spin_string.annihilate(p);
+                        spin_string.create(q);
 
-                        spin_string.annihilate(q);//flip back (so we don't need to copy the set)
-                    }else{ //if we can't create we can annihilated (but only on the diagonal, no transform required
+                        size_t J = spin_string.address(this->addressing_scheme);  // J is the address of a string that couples to I
 
-                        // Integral parameters are entered in chemical notation!
-                        double same_spin_two_int = this->so_basis.get_g_SO(p,p,q,q);//=mixed_spin_two_int (exciting a beta and an alpha in-place)
-                        double same_spin_two_int_negative = -this->so_basis.get_g_SO(p,q,q,p);//mixed_spin does not have this because it would result in 0 term (integral of alpha-beta)
+                        // The loops are p->K and q<p. So, we should normally multiply by a factor 2 (since the summand is symmetric)
+                        // However, we are setting both of the symmetric indices of Hamiltonian, so no factor 2 is required
+                        matrix_solver->addToMatrix(this->so_basis.get_g_SO(p, q, p, q), I, J);
+                        matrix_solver->addToMatrix(this->so_basis.get_g_SO(p, q, p, q), J, I);
 
-                        //We don't iterate over all the SO's the second time so multiply by 2 getting rid of 1/2 two electron term.
-                        //multiply by 2 again because alpha,alpha is the same as beta,beta combinations.
-                        //same_spin (positive) = mixed, so multiply that by 2 again.
-                        matrix_solver->addToMatrix(4*same_spin_two_int + 2*same_spin_two_int_negative, I, I);
+                        spin_string.annihilate(q);  // reset the spin string after previous creation
+                        spin_string.create(p);  // reset the spin string after previous annihilation
                     }
-
-                }
-                spin_string.create(p);
+                }  // q < p loop
             }
-        }
-    }
+        }  // p loop
+
+        spin_string.nextPermutation();
+    }  // address (I) loop
 }
 
 
@@ -75,14 +66,79 @@ void DOCI::constructHamiltonian(numopt::eigenproblem::BaseMatrixSolver* matrix_s
  */
 Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
 
+//    auto start = std::chrono::high_resolution_clock::now();
+
+
+    // Create the first spin string. Since in DOCI, alpha == beta, we can just treat them as one.
+    // TODO: determine when to switch from unsigned to unsigned long, unsigned long long or boost::dynamic_bitset<>
+    bmqc::SpinString<unsigned long> spin_string (0, this->addressing_scheme);  // spin string with address 0
+
+
+    // Diagonal contributions
+    Eigen::VectorXd matvec = this->diagonal.cwiseProduct(x);
+
+
+    // Off-diagonal contributions
+    for (size_t I = 0; I < this->dim; I++) {  // I loops over all the addresses of the spin strings
+
+        for (size_t p = 0; p < this->K; p++) {  // p loops over all SOs
+            if (spin_string.isOccupied(p)) {  // p in I
+                for (size_t q = 0; q < p; q++) {  // q loops over all SOs smaller than p
+                    if (!spin_string.isOccupied(q)) {  // q not in I
+
+                        spin_string.annihilate(p);
+                        spin_string.create(q);
+
+                        size_t J = spin_string.address(this->addressing_scheme);  // J is the address of a string that couples to I
+
+                        matvec(I) += this->so_basis.get_g_SO(p,q,p,q) * x(J);  // off-diagonal contribution
+                        matvec(J) += this->so_basis.get_g_SO(p,q,p,q) * x(I);  // off-diagonal contribution for q > p (not explicitly in sum)
+
+                        spin_string.annihilate(q);  // reset the spin string after previous creation
+                        spin_string.create(p);  // reset the spin string after previous annihilation
+                    }
+                } // q < p loop
+            }
+        }  // p loop
+
+        spin_string.nextPermutation();
+    }  // address (I) loop
+
+//    auto stop = std::chrono::high_resolution_clock::now();
+//
+//    std::cout << '\t' << std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()
+//                      << " microseconds in matvec." << std::endl;
+
+    return matvec;
 }
 
 
 /**
- *  @return the diagonal of the matrix representation of the DOCI Hamiltonian.
+ *  @set the diagonal of the matrix representation of the DOCI Hamiltonian.
  */
-Eigen::VectorXd DOCI::calculateDiagonal() {
+void DOCI::calculateDiagonal() {
 
+    // TODO: determine when to switch from unsigned to unsigned long, unsigned long long or boost::dynamic_bitset<>
+    bmqc::SpinString<unsigned long> spin_string (0, this->addressing_scheme);
+
+    for (size_t I = 0; I < this->dim; I++) {  // I loops over addresses of spin strings
+
+        for (size_t p = 0; p < this->K; p++) {  // p loops over SOs
+            if (spin_string.isOccupied(p)) {  // p is in I
+                this->diagonal(I) += 2 * this->so_basis.get_h_SO(p,p) + this->so_basis.get_g_SO(p,p,p,p);
+
+                for (size_t q = 0; q < p; q++) {  // q loops over SOs
+                    if (spin_string.isOccupied(q)) {  // q is in I
+
+                        // Since we are doing a restricted summation q<p, we should multiply by 2 since the summand argument is symmetric.
+                        this->diagonal(I) += 2 * (2*this->so_basis.get_g_SO(p,p,q,q) - this->so_basis.get_g_SO(p,q,q,p));
+                    }
+                }  // q loop
+            }
+        }  // p loop
+
+        spin_string.nextPermutation();
+    }  // address (I) loop
 }
 
 
@@ -100,7 +156,7 @@ DOCI::DOCI(libwint::SOBasis& so_basis, size_t N) :
     addressing_scheme (bmqc::AddressingScheme(this->K, this->N_P)) // since in DOCI, alpha==beta, we should make an
                                                                    // addressing scheme with the number of PAIRS.
 {
-    // Do some input checks.
+    // Do some input checks
     if ((N % 2) != 0) {
         throw std::invalid_argument("You gave an odd amount of electrons, which is not suitable for DOCI.");
     }
@@ -109,6 +165,14 @@ DOCI::DOCI(libwint::SOBasis& so_basis, size_t N) :
         throw std::invalid_argument("Too many electrons to place into the given number of spatial orbitals.");
     }
 }
+
+
+/**
+ *  Constructor based on a given @param so_basis and a @param molecule.
+ */
+DOCI::DOCI(libwint::SOBasis& so_basis, const libwint::Molecule& molecule) :
+    DOCI (so_basis, molecule.get_N())
+{}
 
 
 

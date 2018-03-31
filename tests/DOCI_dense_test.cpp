@@ -32,7 +32,6 @@ BOOST_AUTO_TEST_CASE ( DOCI_beh_cation_klaas_dense ) {
 
 BOOST_AUTO_TEST_CASE ( DOCI_lih_klaas_dense ) {
 
-
     // Klaas' reference DOCI energy for LiH (obtained through Caitlin)
     double reference_doci_energy = -8.0029560313;
 
@@ -47,6 +46,27 @@ BOOST_AUTO_TEST_CASE ( DOCI_lih_klaas_dense ) {
     double internuclear_repulsion_energy = 9.6074293445896852e-01;  // this comes straight out of the FCIDUMP file
     double test_doci_energy = doci.get_eigenvalue() + internuclear_repulsion_energy;
 
+
+    BOOST_CHECK(std::abs(test_doci_energy - (reference_doci_energy)) < 1.0e-9);
+}
+
+
+BOOST_AUTO_TEST_CASE ( DOCI_li2_klaas_dense ) {
+
+    // Klaas' reference DOCI energy for Li2
+    double reference_doci_energy = -15.1153976060;
+
+
+    // Do a DOCI calculation based on a given FCIDUMP file
+    libwint::SOBasis so_basis ("../tests/reference_data/li2_321g_klaas.FCIDUMP", 18);  // 18 SOs
+    ci::DOCI doci (so_basis, 6);  // 6 electrons
+    doci.solve(numopt::eigenproblem::SolverType::DENSE);
+
+
+    // Calculate the total energy
+    double internuclear_repulsion_energy = 3.0036546888874875e+00;  // this comes straight out of the FCIDUMP file
+    double test_doci_energy = doci.get_eigenvalue() + internuclear_repulsion_energy;
+    std::cout << "DOCI ENERGY: " << test_doci_energy << std::endl;
 
     BOOST_CHECK(std::abs(test_doci_energy - (reference_doci_energy)) < 1.0e-9);
 }

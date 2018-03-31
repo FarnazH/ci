@@ -10,9 +10,6 @@ target_include_directories(${LIBRARY_NAME} PUBLIC ${Boost_INCLUDE_DIRS})
 # Include Eigen
 target_link_libraries(${LIBRARY_NAME} PUBLIC Eigen3::Eigen)
 
-#Include Spectra
-target_include_directories(${LIBRARY_NAME} PUBLIC /opt/local/spectra/include)
-
 # Include hf
 target_include_directories(${LIBRARY_NAME} PUBLIC ${hf_INCLUDE_DIRS})
 target_link_libraries(${LIBRARY_NAME} PUBLIC hf)

@@ -1,14 +1,19 @@
-# ci v1.0.0
+# ci v1.1.0
 [![Build Status](https://travis-ci.org/GQCG/ci.svg?branch=master)](https://travis-ci.org/GQCG/ci)
 
 A C++ library for performing configuration interaction (CI) calculations.
 
 ## Dependencies
-[![Eigen3 Dependency](https://img.shields.io/badge/Eigen-3+-blue.svg)](http://eigen.tuxfamily.org/index.php?title=Main_Page)
+[![Boost Dependency](https://img.shields.io/badge/Boost-1.65.1+-000000.svg)](http://www.boost.org)
+[![Eigen3 Dependency](https://img.shields.io/badge/Eigen-3.3.4+-000000.svg)](http://eigen.tuxfamily.org/index.php?title=Main_Page)
+[![libint2 Dependency](https://img.shields.io/badge/libint-2.3.1+-000000.svg)](https://github.com/evaleev/libint)
+[![Spectra Dependency](https://img.shields.io/badge/Spectra-0.6.1+-000000.svg)](https://github.com/yixuan/spectra/)
+
 [![bmqc Dependency](https://img.shields.io/badge/bmqc-1.0.1+-blue.svg)](https://github.com/GQCG/bmqc)
-[![libwint Dependency](https://img.shields.io/badge/libwrp-3.0.0+-blue.svg)](https://github.com/GQCG/libwrp)
+[![cpputil Dependency](https://img.shields.io/badge/cpputil-1.3.0+-blue.svg)](https://github.com/GQCG/cpputil)
+[![libwint Dependency](https://img.shields.io/badge/libwrp-3.0.0+-blue.svg)](https://github.com/GQCG/libwint)
 [![hf Dependency](https://img.shields.io/badge/hf-3.0.0+-blue.svg)](https://github.com/GQCG/hf)
-[![numopt Dependency](https://img.shields.io/badge/bmqc-1.0.0+-blue.svg)](https://github.com/GQCG/numopt)
+[![numopt Dependency](https://img.shields.io/badge/numopt-1.1.0+-blue.svg)](https://github.com/GQCG/numopt)
 
 
 ## Installation
@@ -33,6 +38,6 @@ To install this library:
 ## Usage
 Basic usage of this library can be found in the `tests` directory. If you use CMake in other projects, you can add the following CMake command to the CMakeLists.txt-file:
 
-    find_package(ci x.y.z)
+    find_package(ci 1.1.0)
 
 where `x.y.z` is the version number. CMake then provides the commands `ci_INCLUDE_DIRS` to be used in your `target_include_directories` and the library `ci` to be used in your `target_link_libraries`.

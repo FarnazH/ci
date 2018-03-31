@@ -29,9 +29,9 @@ private:
     Eigen::VectorXd matrixVectorProduct(const Eigen::VectorXd& x) override;
 
     /**
-     *  @return the diagonal of the matrix representation of the DOCI Hamiltonian.
+     *  @set the diagonal of the matrix representation of the Hamiltonian.
      */
-    Eigen::VectorXd calculateDiagonal() override;
+    void calculateDiagonal() override;
 
 
 
@@ -41,6 +41,11 @@ public:
      *  Constructor based on a given @param so_basis and a number of electrons @param N.
      */
     DOCI(libwint::SOBasis& so_basis, size_t N);
+
+    /**
+     *  Constructor based on a given @param so_basis and a @param molecule.
+     */
+    DOCI(libwint::SOBasis& so_basis, const libwint::Molecule& molecule);
 
 
     // DESTRUCTOR
