@@ -80,10 +80,10 @@ Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
 
     // Off-diagonal contributions
     for (size_t I = 0; I < this->dim; I++) {  // I loops over all the addresses of the spin strings
-
+        double I_matvec_value = 0;
         for (size_t p = 0; p < this->K; p++) {  // p loops over all SOs
             if (spin_string.isOccupied(p)) {  // p in I
-                for (size_t q = 0; q < p; q++) {  // q loops over all SOs smaller than p
+                for (size_t q = p+1; q < this->K; q++) {  // q loops over all SOs smaller than p
                     if (!spin_string.isOccupied(q)) {  // q not in I
 
                         spin_string.annihilate(p);
@@ -91,7 +91,7 @@ Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
 
                         size_t J = spin_string.address(this->addressing_scheme);  // J is the address of a string that couples to I
 
-                        matvec(I) += this->so_basis.get_g_SO(p,q,p,q) * x(J);  // off-diagonal contribution
+                        I_matvec_value += this->so_basis.get_g_SO(p,q,p,q) * x(J);  // off-diagonal contribution
                         matvec(J) += this->so_basis.get_g_SO(p,q,p,q) * x(I);  // off-diagonal contribution for q > p (not explicitly in sum)
 
                         spin_string.annihilate(q);  // reset the spin string after previous creation
@@ -100,7 +100,7 @@ Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
                 } // q < p loop
             }
         }  // p loop
-
+        matvec(I) += I_matvec_value;
         spin_string.nextPermutation();
     }  // address (I) loop
 
