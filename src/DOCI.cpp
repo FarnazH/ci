@@ -10,7 +10,28 @@
 #include <chrono>
 
 
+void bmqc2_nextPermutation(unsigned long& spin_string) {
 
+    // t gets this->representation's least significant 0 bits set to 1
+    unsigned long t = spin_string | (spin_string - 1UL);
+
+    // Next set to 1 the most significant bit to change,
+    // set to 0 the least significant ones, and add the necessary 1 bits.
+    spin_string = (t + 1UL) | (((~t & (t+1UL)) - 1UL) >> (__builtin_ctz(spin_string) + 1UL));
+}
+size_t get_address(const unsigned long& spin_string, const bmqc::AddressingScheme& addressing_scheme, int start, int hits) {
+    size_t copy = spin_string >> start;
+    // An implementation of the formula in Helgaker, starting the addressing count from zero
+    size_t address = 0;
+    while(copy !=0 ){
+        unsigned long t = copy & -copy;
+        int r = __builtin_ctzl(copy);
+        hits++;
+        address += addressing_scheme.get_vertex_weights(start+r,hits);
+        copy ^= t;
+    }
+    return address;
+}
 namespace ci {
 
 
@@ -71,8 +92,8 @@ Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
 
     // Create the first spin string. Since in DOCI, alpha == beta, we can just treat them as one.
     // TODO: determine when to switch from unsigned to unsigned long, unsigned long long or boost::dynamic_bitset<>
-    bmqc::SpinString<unsigned long> spin_string (0, this->addressing_scheme);  // spin string with address 0
-
+    bmqc::SpinString<unsigned long> spin_string_pre (0, this->addressing_scheme);  // spin string with address 0
+    unsigned long spin_string = 127;
 
     // Diagonal contributions
     Eigen::VectorXd matvec = this->diagonal.cwiseProduct(x);
@@ -81,28 +102,41 @@ Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
     // Off-diagonal contributions
     for (size_t I = 0; I < this->dim; I++) {  // I loops over all the addresses of the spin strings
         double I_matvec_value = 0;
-        for (size_t p = 0; p < this->K; p++) {  // p loops over all SOs
-            if (spin_string.isOccupied(p)) {  // p in I
-                for (size_t q = p+1; q < this->K; q++) {  // q loops over all SOs smaller than p
-                    if (!spin_string.isOccupied(q)) {  // q not in I
+        unsigned long spin_copy = spin_string;
+        int counter = 0;
+        size_t address = 0;
+        while(spin_copy != 0){
+            int p = __builtin_ctzl(spin_copy);
+            int counter2 = counter;
+            unsigned long copy2 = ~(spin_copy | (spin_copy-1));
+            spin_copy ^= (spin_copy & -spin_copy);
+            size_t address2 = address;
+            counter++;
+            address += addressing_scheme.get_vertex_weights(p,counter);
 
-                        spin_string.annihilate(p);
-                        spin_string.create(q);
+            int gap = p+1;
+            while (__builtin_ctzl(copy2) <K) {
+                int q = __builtin_ctzl(copy2);
+                while(q-gap>0){
+                    counter2++;
+                    address2 += addressing_scheme.get_vertex_weights(gap,counter2);
+                    gap++;
 
-                        size_t J = spin_string.address(this->addressing_scheme);  // J is the address of a string that couples to I
+                }
+                gap++;
+                size_t address3 = address2 + addressing_scheme.get_vertex_weights(q,counter2+1) + get_address(spin_string,addressing_scheme,q,counter2+1);;
+                I_matvec_value += this->so_basis.get_g_SO(p,q,p,q) * x(address3);
+                matvec(address3) += this->so_basis.get_g_SO(p,q,p,q) * x(I);
+                copy2 ^= copy2 & -copy2;
 
-                        I_matvec_value += this->so_basis.get_g_SO(p,q,p,q) * x(J);  // off-diagonal contribution
-                        matvec(J) += this->so_basis.get_g_SO(p,q,p,q) * x(I);  // off-diagonal contribution for q > p (not explicitly in sum)
 
-                        spin_string.annihilate(q);  // reset the spin string after previous creation
-                        spin_string.create(p);  // reset the spin string after previous annihilation
-                    }
-                } // q < p loop
             }
         }  // p loop
         matvec(I) += I_matvec_value;
-        spin_string.nextPermutation();
+        bmqc2_nextPermutation(spin_string);
     }  // address (I) loop
+
+
 
 //    auto stop = std::chrono::high_resolution_clock::now();
 //

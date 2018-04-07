@@ -1,0 +1,1 @@
+/opt/local/bin/clang++  -O3 -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/DOCI_sparse_test.dir/DOCI_sparse_test.cpp.o  -o DOCI_sparse_test ../src/libci.a /usr/local/hf/lib/libhf.a /usr/local/bmqc/lib/libbmqc.a /usr/local/cpputil/lib/libcpputil.a /usr/local/libwint/lib/libwint.a /usr/local/libint/2.3.1/lib/libint2.a /usr/local/numopt/lib/libnumopt.a 
