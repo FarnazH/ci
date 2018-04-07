@@ -17,7 +17,7 @@ void bmqc2_nextPermutation(unsigned long& spin_string) {
 
     // Next set to 1 the most significant bit to change,
     // set to 0 the least significant ones, and add the necessary 1 bits.
-    spin_string = (t + 1UL) | (((~t & (t+1UL)) - 1UL) >> (__builtin_ctz(spin_string) + 1UL));
+    spin_string = (t + 1UL) | (((~t & (t+1UL)) - 1UL) >> (__builtin_ctzl(spin_string) + 1UL));
 }
 size_t get_address(const unsigned long& spin_string, const bmqc::AddressingScheme& addressing_scheme, int start, int hits) {
     size_t copy = spin_string >> start;
@@ -93,7 +93,7 @@ Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
     // Create the first spin string. Since in DOCI, alpha == beta, we can just treat them as one.
     // TODO: determine when to switch from unsigned to unsigned long, unsigned long long or boost::dynamic_bitset<>
     bmqc::SpinString<unsigned long> spin_string_pre (0, this->addressing_scheme);  // spin string with address 0
-    unsigned long spin_string = 127;
+    unsigned long spin_string = spin_string_pre.get_representation();
 
     // Diagonal contributions
     Eigen::VectorXd matvec = this->diagonal.cwiseProduct(x);
@@ -124,7 +124,7 @@ Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
 
                 }
                 gap++;
-                size_t address3 = address2 + addressing_scheme.get_vertex_weights(q,counter2+1) + get_address(spin_string,addressing_scheme,q,counter2+1);;
+                size_t address3 = address2 + addressing_scheme.get_vertex_weights(q,counter2+1) + get_address(spin_string,addressing_scheme,q,counter2+1);
                 I_matvec_value += this->so_basis.get_g_SO(p,q,p,q) * x(address3);
                 matvec(address3) += this->so_basis.get_g_SO(p,q,p,q) * x(I);
                 copy2 ^= copy2 & -copy2;
