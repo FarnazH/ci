@@ -110,8 +110,6 @@ Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
             // Inverse so the algorithm can be used on holes. While also setting least significant bit to zero and not inverting the trailing zeros.
             // Allowing us to only calculate the upper diagonal
             unsigned long copy2 = ~(spin_copy | (spin_copy-1));
-            spin_copy ^= (spin_copy & -spin_copy); //  Eliminate least significant bit.
-
             size_t address2 = address;
             int gap = p+1; // Current position in the addressing scheme (called gap because
             int counter2 = counter; // Electron count in the second loop.
@@ -125,10 +123,12 @@ Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
 
                 }
                 gap++; // set gap to the current position in the addressing scheme.
-                // Final address is the current account address + the created electron + all remaining unaccounted for electrons after.
+                // Final address is the current accounted address + account for the created electron + all remaining unaccounted for electrons.
                 size_t address3 = address2 + addressing_scheme.get_vertex_weights(q,counter2+1) + get_address(spin_string,addressing_scheme,q,counter2+1);
+
                 I_matvec_value += this->so_basis.get_g_SO(p,q,p,q) * x(address3);
                 matvec(address3) += this->so_basis.get_g_SO(p,q,p,q) * x(I);
+
                 copy2 ^= copy2 & -copy2; //  Elminate least significant bit.
 
 
@@ -136,6 +136,8 @@ Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
 
             counter++; // When no longer annihilated the electron is added to the count
             address += addressing_scheme.get_vertex_weights(p,counter); // When no longer annihilated the electron contributes to the address.
+            spin_copy ^= (spin_copy & -spin_copy); //  Eliminate least significant bit.
+
         }  // p loop
         matvec(I) += I_matvec_value;
         bmqc2_nextPermutation(spin_string);
