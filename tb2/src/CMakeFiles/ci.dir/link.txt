@@ -1,2 +1,0 @@
-/opt/local/bin/ar qc libci.a  CMakeFiles/ci.dir/BaseCI.cpp.o CMakeFiles/ci.dir/DOCI.cpp.o
-/opt/local/bin/ranlib libci.a
