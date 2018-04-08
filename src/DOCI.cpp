@@ -87,7 +87,7 @@ void DOCI::constructHamiltonian(numopt::eigenproblem::BaseMatrixSolver* matrix_s
  */
 Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
 
-//    auto start = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
 
 
     // Create the first spin string. Since in DOCI, alpha == beta, we can just treat them as one.
@@ -102,53 +102,66 @@ Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
     // Off-diagonal contributions
     for (size_t I = 0; I < this->dim; I++) {  // I loops over all the addresses of the spin strings
         double I_matvec_value = 0;
-        unsigned long spin_copy = spin_string;
-        int counter = 0; // Electron count
-        size_t address = 0;
-        while(spin_copy != 0){
-            int p = __builtin_ctzl(spin_copy); // trailing zero's translate to the annihilation operator position.
-            // Inverse so the algorithm can be used on holes. While also setting least significant bit to zero and not inverting the trailing zeros.
-            // Allowing us to only calculate the upper diagonal
-            unsigned long copy2 = ~(spin_copy | (spin_copy-1));
-            size_t address2 = address;
-            int gap = p+1; // Current position in the addressing scheme (called gap because
-            int counter2 = counter; // Electron count in the second loop.
-            while (__builtin_ctzl(copy2) <this->K) { //Algorithm for the inverse ends when trailings zero's become equal to SO's.
-                int q = __builtin_ctzl(copy2); // trailings zero's in inverse translate to creation operator position
-                while(q-gap>0){ // allows us to bridge the gap (0's that were previously set bits) between to creation operators
+        unsigned long spin_string_copy = spin_string;
+        size_t counter1 = 0;  // counting the electrons in the first loop
+        size_t address1 = 0;  // the part of the address of the spin string with indices < p
+
+
+        // Iterate over all set bits in the spin string (i.e. indices p we can annihilate on)
+        // We're going to keep annihilating the right-most set bit, until we end up with no more set bits (i.e. "0")
+        while (spin_string_copy != 0) {
+            size_t p = __builtin_ctzl(spin_string_copy);  // # of trailing zeros = index of the annihilation operator (i.e. must apply on index p)
+
+            size_t address2 = 0;  // the part of the address of the spin string corresponding to the "gap"
+            size_t gap = p+1; // Current position in the addressing scheme (called gap because
+            size_t counter2 = counter1;  // counting electrons in the second loop)
+
+
+            // Iterate over all unset bits that are beyond p (allowing us to calculate only the upper diagonal contributions (i.e. q > p))
+            // If we want to use __builtin_ctz(), we must invert all bits with index > q
+            unsigned long inverted_spin_string_copy = ~(spin_string_copy | (spin_string_copy-1));  // propagate the right-most set bit and invert the result
+
+            while (__builtin_ctzl(inverted_spin_string_copy) < this->K) {
+                size_t q = __builtin_ctzl(inverted_spin_string_copy);  // # of trailing zeros in the inverted spin string = index of the creation operator
+
+                while (gap < q) { // allows us to bridge the gap (0's that were previously set bits) between to creation operators
                     // This allows us to update the address accordingly.
                     counter2++;
                     address2 += addressing_scheme.get_vertex_weights(gap,counter2);
                     gap++;
-
                 }
                 gap++; // set gap to the current position in the addressing scheme.
-                // Final address is the current accounted address + account for the created electron + all remaining unaccounted for electrons.
-                size_t address3 = address2 + addressing_scheme.get_vertex_weights(q,counter2+1) + get_address(spin_string,addressing_scheme,q,counter2+1);
-
-                I_matvec_value += this->so_basis.get_g_SO(p,q,p,q) * x(address3);
-                matvec(address3) += this->so_basis.get_g_SO(p,q,p,q) * x(I);
-
-                copy2 ^= copy2 & -copy2; //  Elminate least significant bit.
 
 
-            } // q loop
+                size_t address3 = addressing_scheme.get_vertex_weights(q,counter2+1) + get_address(spin_string,addressing_scheme,q,counter2+1);  // the part of the address of the spin string with indices >= q
 
-            counter++; // When no longer annihilated the electron is added to the count
-            address += addressing_scheme.get_vertex_weights(p,counter); // When no longer annihilated the electron contributes to the address.
-            spin_copy ^= (spin_copy & -spin_copy); //  Eliminate least significant bit.
 
-        }  // p loop
+                // The final address J is is the sum of the three parts address1, address2 and address3
+                size_t J = address1 + address2 + address3;
+
+                I_matvec_value += this->so_basis.get_g_SO(p,q,p,q) * x(J);  // accumulating in an auxiliary variable saves us the extra time associated to matvec(I)+= calls
+                matvec(J) += this->so_basis.get_g_SO(p,q,p,q) * x(I);
+
+                inverted_spin_string_copy ^= inverted_spin_string_copy & -inverted_spin_string_copy;  // annihilate the least significant bit, i.e. create on the least significant position q>p in the original spin string
+
+
+            }  // q loop (creation)
+
+            counter1++;
+            address1 += addressing_scheme.get_vertex_weights(p,counter1);
+            spin_string_copy ^= (spin_string_copy & -spin_string_copy);  // annihilate the least significant bit, i.e. on index p
+
+        }  // p loop (annihilation)
         matvec(I) += I_matvec_value;
         bmqc2_nextPermutation(spin_string);
     }  // address (I) loop
 
 
 
-//    auto stop = std::chrono::high_resolution_clock::now();
-//
-//    std::cout << '\t' << std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()
-//                      << " microseconds in matvec." << std::endl;
+    auto stop = std::chrono::high_resolution_clock::now();
+
+    std::cout << '\t' << std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()
+                      << " microseconds in matvec." << std::endl;
 
     return matvec;
 }
