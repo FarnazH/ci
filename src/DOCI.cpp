@@ -21,18 +21,22 @@ void bmqc2_nextPermutation(unsigned long& spin_string) {
 }
 
 
+/**
+ *  @return the address of a subset of the spin_string: with indices >= start. This can only be done with information
+ *  about how many electrons is in the 'start' part, which is represented by @param hits.
+ */
 size_t get_address(const unsigned long& spin_string, const bmqc::AddressingScheme& addressing_scheme, size_t start, size_t hits) {
 
     size_t copy = spin_string >> start;
 
     // An implementation of the formula in Helgaker, starting the addressing count from zero
     size_t address = 0;
-    while(copy !=0 ){
-        unsigned long t = copy & -copy;
-        int r = __builtin_ctzl(copy);
+    while (copy != 0) {
+        size_t r = __builtin_ctzl(copy);
         hits++;
         address += addressing_scheme.get_vertex_weights(start+r,hits);
-        copy ^= t;
+        std::cout << addressing_scheme.get_vertex_weights(start+r, hits) << std::endl;
+        copy ^= copy & -copy;
     }
     return address;
 }
@@ -165,7 +169,7 @@ Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
 
                     // Addresses are updated using the formula in Helgaker's book:
                     // += W(orbital index , electrons in the spin string up until this orbital index (included))
-                    address2 += addressing_scheme.get_vertex_weights(gap,counter2);
+                    address2 += this->addressing_scheme.get_vertex_weights(gap,counter2);
                     gap++;
                 }
                 // At this moment, gap == q, so in order to continue with the correct index in the next iteration of the loop,
@@ -173,7 +177,8 @@ Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
                 gap++;
 
                 // address3 is the final part of the total address. It is the address of the substring with indices >= q
-                size_t address3 = addressing_scheme.get_vertex_weights(q,counter2+1) + get_address(spin_string,addressing_scheme,q,counter2+1);  // the part of the address of the spin string with indices >= q
+                size_t address3 = this->addressing_scheme.get_vertex_weights(q,counter2+1)  // W(orbital index, electrons up until this orbital index)
+                                  + get_address(spin_string, this->addressing_scheme, q, counter2+1);
 
 
                 // The final address J is is the sum of the three parts address1, address2 and address3
@@ -191,7 +196,7 @@ Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
             // with the next occupied orbital. Since we are destroying our "copy", we have to keep track of how many
             // electrons we have already encountered, since these contribute to the total address.
             counter1++;
-            address1 += addressing_scheme.get_vertex_weights(p,counter1);
+            address1 += this->addressing_scheme.get_vertex_weights(p,counter1);
             copy ^= (copy & -copy);  // annihilate the least significant bit, i.e. on index p
                                      // the next set bit can then be again found using __builtin_ctz(copy)
         }  // p loop (annihilation)
