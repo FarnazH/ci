@@ -112,13 +112,18 @@ Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
         //      - an electron in an occupied orbital p is annihilated
         //      - an electron in an unoccupied orbital q is created
 
+        // We will find these indices by using an elegant approach of 'iterating over set bits' (https://lemire.me/blog/2018/02/21/iterating-over-set-bits-quickly/)
+        // The auxiliary bit strings will be called
+        //      - copy      containing all the (remaining) set bits
+        //      - inverted  containing all the (remaining) unset bits
+
+
         double I_matvec_value = 0;  // accumulating in an auxiliary variable saves us the extra time associated to "matvec(I) +=" calls
 
 
-
-        // We are dividing the address calculation in three parts:
-        //      - address1:     the part of the address of the coupling spin string |J> with indices < p
-        //      - address2:
+        // We are dividing the address of the coupling spin string |J> in three parts:
+        //      - address1:     the part with indices < p
+        //      - address2:     the part that accounts for the set bits that are hopped over
         //      - address3:
         size_t counter1 = 0;  // counts the electrons in orbitals with indices < p in the coupling spin string |J>
         size_t address1 = 0;  // the part of the address of the coupling spin string |J> with indices < p
@@ -130,26 +135,44 @@ Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
         while (copy != 0) {
             size_t p = __builtin_ctzl(copy);  // # of trailing zeros = index of the annihilation operator (i.e. must apply on index p)
 
-            size_t address2 = 0;  // the part of the address of the spin string corresponding to the "gap"
-            size_t gap = p+1; // Current position in the addressing scheme (called gap because
-            size_t counter2 = counter1;  // counting electrons in the second loop)
+            size_t address2 = 0;  // the part that accounts for the set bits that are hopped over
+            size_t gap = p+1;  // the orbital index that is going to be investigated next, i.e. the current orbital index in the addressing scheme
+            size_t counter2 = counter1;  // counting electrons in the orbitals of the coupling spin string |J> with indices < q
+                                         // we can start with a value of counter1, since we have already done work for indices < p
 
 
             // Iterate over all unset bits that are beyond p (allowing us to calculate only the upper diagonal contributions (i.e. q > p))
             // If we want to use __builtin_ctz(), we must invert all bits with index > q
             unsigned long inverted = ~(copy | (copy-1));  // propagate the right-most set bit and invert the result
-            while (__builtin_ctzl(inverted) < this->K) {  // we can't use inverted != 0 since the inverting also affects the bits > K
+            while (__builtin_ctzl(inverted) < this->K) {  // we can't use (inverted != 0) since the inverting also affects the bits > K
                 size_t q = __builtin_ctzl(inverted);  // # of trailing zeros in the inverted spin string = index of the creation operator
 
-                while (gap < q) { // allows us to bridge the gap (0's that were previously set bits) between two creation operators
-                    // This allows us to update the address accordingly.
-                    counter2++;
+
+                // Imagine the original spin string is "0011010" (in this one we find all ps)
+                // then the inverted one is            "1100100" (in this one we find all qs > p)
+                // Let's say we're in the second loop
+                // of the excitation: which means that
+                // the inverted one has become         "1100000"
+                // We must then account for the two occupied orbitals at indices 3 and 4, which contribute to the
+                // address of the coupling spin string |J>
+
+
+                // This following loop allows us to bridge the gap, i.e. update the address accordingly
+                // If gap == q from the start, then there were no intermediate set bits and this loop is thus skipped
+                // If gap < q, then there are intermediate set bits and we should keep track of them
+                while (gap < q) {
+                    counter2++;  // keeping track of the electrons in orbitals of the coupling spin string |J> with indices < q
+
+                    // Addresses are updated using the formula in Helgaker's book:
+                    // += W(orbital index , electrons in the spin string up until this orbital index (included))
                     address2 += addressing_scheme.get_vertex_weights(gap,counter2);
                     gap++;
                 }
-                gap++; // set gap to the current position in the addressing scheme.
+                // At this moment, gap == q, so in order to continue with the correct index in the next iteration of the loop,
+                // we have to increase gap by 1, i.e. it follows the current orbital index in the addressing scheme
+                gap++;
 
-
+                // address3 is the final part of the total address. It is the address of the substring with indices >= q
                 size_t address3 = addressing_scheme.get_vertex_weights(q,counter2+1) + get_address(spin_string,addressing_scheme,q,counter2+1);  // the part of the address of the spin string with indices >= q
 
 
@@ -157,7 +180,7 @@ Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
                 size_t J = address1 + address2 + address3;
 
                 I_matvec_value += this->so_basis.get_g_SO(p,q,p,q) * x(J);  // accumulating in an auxiliary variable saves us the extra time associated to matvec(I)+= calls
-                matvec(J) += this->so_basis.get_g_SO(p,q,p,q) * x(I);
+                matvec(J) += this->so_basis.get_g_SO(p,q,p,q) * x(I);  // the Hamiltonian is symmetric, so we have to add this contribution if we're doing q>p, i.e. J>I
 
                 inverted ^= inverted & -inverted;  // annihilate the least significant bit, i.e. create on the least significant position q>p in the original spin string
                                                    // the next unset bit in the original spin string can then again be found using __builtin_ctz(inverted)
