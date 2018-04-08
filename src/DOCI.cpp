@@ -19,8 +19,12 @@ void bmqc2_nextPermutation(unsigned long& spin_string) {
     // set to 0 the least significant ones, and add the necessary 1 bits.
     spin_string = (t + 1UL) | (((~t & (t+1UL)) - 1UL) >> (__builtin_ctzl(spin_string) + 1UL));
 }
-size_t get_address(const unsigned long& spin_string, const bmqc::AddressingScheme& addressing_scheme, int start, int hits) {
+
+
+size_t get_address(const unsigned long& spin_string, const bmqc::AddressingScheme& addressing_scheme, size_t start, size_t hits) {
+
     size_t copy = spin_string >> start;
+
     // An implementation of the formula in Helgaker, starting the addressing count from zero
     size_t address = 0;
     while(copy !=0 ){
@@ -32,6 +36,8 @@ size_t get_address(const unsigned long& spin_string, const bmqc::AddressingSchem
     }
     return address;
 }
+
+
 namespace ci {
 
 
@@ -101,16 +107,28 @@ Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
 
     // Off-diagonal contributions
     for (size_t I = 0; I < this->dim; I++) {  // I loops over all the addresses of the spin strings
-        double I_matvec_value = 0;
-        unsigned long spin_string_copy = spin_string;
-        size_t counter1 = 0;  // counting the electrons in the first loop
-        size_t address1 = 0;  // the part of the address of the spin string with indices < p
+        // We are essentially looking for all addresses J of spin strings that couple to the spin string at I
+        // These are the ones in which:
+        //      - an electron in an occupied orbital p is annihilated
+        //      - an electron in an unoccupied orbital q is created
+
+        double I_matvec_value = 0;  // accumulating in an auxiliary variable saves us the extra time associated to "matvec(I) +=" calls
 
 
-        // Iterate over all set bits in the spin string (i.e. indices p we can annihilate on)
-        // We're going to keep annihilating the right-most set bit, until we end up with no more set bits (i.e. "0")
-        while (spin_string_copy != 0) {
-            size_t p = __builtin_ctzl(spin_string_copy);  // # of trailing zeros = index of the annihilation operator (i.e. must apply on index p)
+
+        // We are dividing the address calculation in three parts:
+        //      - address1:     the part of the address of the coupling spin string |J> with indices < p
+        //      - address2:
+        //      - address3:
+        size_t counter1 = 0;  // counts the electrons in orbitals with indices < p in the coupling spin string |J>
+        size_t address1 = 0;  // the part of the address of the coupling spin string |J> with indices < p
+
+
+        // The first loop essentially iterates over all set bits in the spin string (i.e. indices p we can annihilate on)
+        // We're going to keep in-place annihilating the right-most set bit, until we end up with no more set bits (i.e. "0")
+        unsigned long copy = spin_string;
+        while (copy != 0) {
+            size_t p = __builtin_ctzl(copy);  // # of trailing zeros = index of the annihilation operator (i.e. must apply on index p)
 
             size_t address2 = 0;  // the part of the address of the spin string corresponding to the "gap"
             size_t gap = p+1; // Current position in the addressing scheme (called gap because
@@ -119,12 +137,11 @@ Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
 
             // Iterate over all unset bits that are beyond p (allowing us to calculate only the upper diagonal contributions (i.e. q > p))
             // If we want to use __builtin_ctz(), we must invert all bits with index > q
-            unsigned long inverted_spin_string_copy = ~(spin_string_copy | (spin_string_copy-1));  // propagate the right-most set bit and invert the result
+            unsigned long inverted = ~(copy | (copy-1));  // propagate the right-most set bit and invert the result
+            while (__builtin_ctzl(inverted) < this->K) {  // we can't use inverted != 0 since the inverting also affects the bits > K
+                size_t q = __builtin_ctzl(inverted);  // # of trailing zeros in the inverted spin string = index of the creation operator
 
-            while (__builtin_ctzl(inverted_spin_string_copy) < this->K) {
-                size_t q = __builtin_ctzl(inverted_spin_string_copy);  // # of trailing zeros in the inverted spin string = index of the creation operator
-
-                while (gap < q) { // allows us to bridge the gap (0's that were previously set bits) between to creation operators
+                while (gap < q) { // allows us to bridge the gap (0's that were previously set bits) between two creation operators
                     // This allows us to update the address accordingly.
                     counter2++;
                     address2 += addressing_scheme.get_vertex_weights(gap,counter2);
@@ -142,16 +159,20 @@ Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
                 I_matvec_value += this->so_basis.get_g_SO(p,q,p,q) * x(J);  // accumulating in an auxiliary variable saves us the extra time associated to matvec(I)+= calls
                 matvec(J) += this->so_basis.get_g_SO(p,q,p,q) * x(I);
 
-                inverted_spin_string_copy ^= inverted_spin_string_copy & -inverted_spin_string_copy;  // annihilate the least significant bit, i.e. create on the least significant position q>p in the original spin string
-
-
+                inverted ^= inverted & -inverted;  // annihilate the least significant bit, i.e. create on the least significant position q>p in the original spin string
+                                                   // the next unset bit in the original spin string can then again be found using __builtin_ctz(inverted)
             }  // q loop (creation)
 
+
+            // Once all possible excitations (i.e. the suitable orbitals q>p) from an orbital p are found, we continue
+            // with the next occupied orbital. Since we are destroying our "copy", we have to keep track of how many
+            // electrons we have already encountered, since these contribute to the total address.
             counter1++;
             address1 += addressing_scheme.get_vertex_weights(p,counter1);
-            spin_string_copy ^= (spin_string_copy & -spin_string_copy);  // annihilate the least significant bit, i.e. on index p
-
+            copy ^= (copy & -copy);  // annihilate the least significant bit, i.e. on index p
+                                     // the next set bit can then be again found using __builtin_ctz(copy)
         }  // p loop (annihilation)
+
         matvec(I) += I_matvec_value;
         bmqc2_nextPermutation(spin_string);
     }  // address (I) loop
