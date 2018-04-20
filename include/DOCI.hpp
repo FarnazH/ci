@@ -58,6 +58,18 @@ public:
      *  the DOCI space.
      */
     static size_t calculateDimension(size_t K, size_t N_P);
+
+
+    // OVERRIDDEN PUBLIC METHODS
+    /**
+     *  Calculate all the 1-RDMs for DOCI.
+     */
+    void calculate1RDMs() override;
+
+    /**
+     *  Calculate all the 2-RDMS for DOCI.
+     */
+    void calculate2RDMs() override;
 };
 
 

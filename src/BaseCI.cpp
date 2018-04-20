@@ -108,4 +108,74 @@ void BaseCI::solve(numopt::eigenproblem::SolverType solver_type) {
 }
 
 
+
+/*
+ * GETTERS
+ */
+
+Eigen::MatrixXd BaseCI::get_one_rdm_aa() const {
+    if (!this->are_computed_one_rdms) {
+        throw std::logic_error("The requested reduced density matrix is not computed yet.");
+    }
+    return this->one_rdm_aa;
+}
+
+
+Eigen::MatrixXd BaseCI::get_one_rdm_bb() const {
+    if (!this->are_computed_one_rdms) {
+        throw std::logic_error("The requested reduced density matrix is not computed yet.");
+    }
+    return this-> one_rdm_bb;
+}
+
+
+Eigen::MatrixXd BaseCI::get_one_rdm() const {
+    if (!this->are_computed_one_rdms) {
+        throw std::logic_error("The requested reduced density matrix is not computed yet.");
+    }
+    return this-> one_rdm;
+}
+
+
+Eigen::Tensor<double, 4> BaseCI::get_two_rdm_aaaa() const {
+    if (!this->are_computed_two_rdms) {
+        throw std::logic_error("The requested reduced density matrix is not computed yet.");
+    }
+    return this->two_rdm_aaaa;
+}
+
+
+Eigen::Tensor<double, 4> BaseCI::get_two_rdm_aabb() const {
+    if (!this->are_computed_two_rdms) {
+        throw std::logic_error("The requested reduced density matrix is not computed yet.");
+    }
+    return this->two_rdm_aabb;
+}
+
+
+Eigen::Tensor<double, 4> BaseCI::get_two_rdm_bbaa() const {
+    if (!this->are_computed_two_rdms) {
+        throw std::logic_error("The requested reduced density matrix is not computed yet.");
+    }
+    return this->two_rdm_bbaa;
+}
+
+
+Eigen::Tensor<double, 4> BaseCI::get_two_rdm_bbbb() const {
+    if (!this->are_computed_two_rdms) {
+        throw std::logic_error("The requested reduced density matrix is not computed yet.");
+    }
+    return this->two_rdm_bbbb;
+}
+
+
+Eigen::Tensor<double, 4> BaseCI::get_two_rdm() const {
+    if (!this->are_computed_two_rdms) {
+        throw std::logic_error("The requested reduced density matrix is not computed yet.");
+    }
+    return this->two_rdm;
+}
+
+
+
 }  // namespace ci

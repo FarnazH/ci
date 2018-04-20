@@ -11,9 +11,9 @@ namespace eigenproblem {
             == protected constructors ==
                 # explicit **BaseEigenproblemSolver**(size_t dim)
             == destructor ==
-                virtual ~ **BaseEigenproblemSolver**() = default
-            __ public pure virtual methods __
-                + virtual void **solve**() = 0
+                {abstract} virtual ~ **BaseEigenproblemSolver**() = default
+            __ public pure {abstract} virtual methods __
+                + {abstract} virtual void **solve**() = 0
             __ public methods __
                 + **get_eigenvalue**() const
                 + **get_eigenvector**() const
@@ -23,8 +23,8 @@ namespace eigenproblem {
         abstract class BaseMatrixSolver {
             == destructor ==
                 **~BaseMatrixSolver**() override = default
-            __ public pure virtual methods __
-                + virtual void **addToMatrix**(double value, size_t index1, size_t index2) = 0
+            __ public pure {abstract} virtual methods __
+                + {abstract} virtual void **addToMatrix**(double value, size_t index1, size_t index2) = 0
         }
 
 
@@ -47,7 +47,7 @@ namespace eigenproblem {
             == destructor ==
                  **~SparseSolver**() override = default
             __ public methods __
-                + virtual void **solve**() override
+                + {abstract} virtual void **solve**() override
                 + void **addToMatrix**(double value, size_t index1, size_t index2) override
         }
 
@@ -127,22 +127,40 @@ namespace ci {
             # const size_t dim
 
             # Eigen::VectorXd diagonal
+
+            #bool are_computed_one_rdms = false
+            #bool are_computed_two_rdms = false
+
+            #Eigen::MatrixXd one_rdm_aa
+            #Eigen::MatrixXd one_rdm_bb
+            #Eigen::Tensor<double, 4> two_rdm_aaaa
+            #Eigen::Tensor<double, 4> two_rdm_aabb
+            #Eigen::Tensor<double, 4> two_rdm_bbaa
+            #Eigen::Tensor<double, 4> two_rdm_bbbb
         == protected constructors ==
             # explicit **BaseCI**(libwint::SOBasis& so_basis)
-        __ protected pure virtual methods __
-            # virtual void **constructHamiltonian**(ci::solver::BaseMatrixSolver* matrix_solver) = 0
-            # virtual Eigen::VectorXd **matrixVectorProduct**() = 0
-            # virtual Eigen::VectorXd **calculateDiagonal**() = 0
+        __ protected pure {abstract} virtual methods __
+            # {abstract} virtual void **constructHamiltonian**(ci::solver::BaseMatrixSolver* matrix_solver) = 0
+            # {abstract} virtual Eigen::VectorXd **matrixVectorProduct**() = 0
+            # {abstract} virtual Eigen::VectorXd **calculateDiagonal**() = 0
         __ protected methods __
             # void **solveMatrixEigenvalueProblem**(ci::solver::BaseMatrixSolver* matrix_solver)
         == destructor ==
-            virtual **~BaseCI**()
+            {abstract} virtual **~BaseCI**()
         __ public methods __
             + size_t **get_dim**() const
             + double **get_eigenvalue**() const
             + Eigen::VectorXd **get_eigenvector**() const
+            + Eigen::MatrixXd get_one_rdm_aa() const
+            + Eigen::MatrixXd get_one_rdm_bb() const
+            + Eigen::Tensor<double, 4> get_two_rdm_aaaa() const
+            + Eigen::Tensor<double, 4> get_two_rdm_aabb() const
+            + Eigen::Tensor<double, 4> get_two_rdm_bbaa() const
+            + Eigen::Tensor<double, 4> get_two_rdm_bbbb() const
 
             + void **solve**(ci::solver::SolverType solver_type)
+            + {abstract} virtual void compute1RDM()=0
+            + {abstract} virtual void compute2RDM()=0
     }
     ci.BaseCI *--> numopt.eigenproblem.BaseEigenproblemSolver
     ci.BaseCI *--> bmqc.SpinString
@@ -164,6 +182,10 @@ namespace ci {
             **DOCI**(const libwint::SOBasis& so_basis, size_t N)
         == destructor ==
             **~DOCI**()
+        __ public methods __
+            + void calculate1RDMs() override
+            + void calculate2RDMs() override
+            + {static} calculateDimension
     }
 
 

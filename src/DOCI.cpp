@@ -142,7 +142,6 @@ void DOCI::calculateDiagonal() {
 }
 
 
-
 /*
  *  CONSTRUCTORS
  */
@@ -192,6 +191,117 @@ size_t DOCI::calculateDimension(size_t K, size_t N_P) {
     // Check if the resulting dimension is appropriate to be stored in size_t
     return boost::numeric::converter<double, size_t>::convert(dim_double);
 }
+
+
+
+/*
+ *  OVERRIDDEN PUBLIC METHODS
+ */
+
+/**
+ *  Calculate all the 1-RDMS for DOCI.
+ */
+void DOCI::calculate1RDMs() {
+
+    // The formulas for the DOCI 1-RDMs can be found in (https://github.com/lelemmen/electronic_structure)
+
+
+    this->one_rdm_aa = Eigen::MatrixXd::Zero(this->K,this->K);
+
+    // Create the first spin string. Since in DOCI, alpha == beta, we can just treat them as one.
+    // TODO: determine when to switch from unsigned to unsigned long, unsigned long long or boost::dynamic_bitset<>
+    bmqc::SpinString<unsigned long> spin_string (0, this->addressing_scheme);  // spin string with address 0
+
+
+    for (size_t I = 0; I < this->dim; I++) {  // I loops over all the addresses of the spin strings
+        if (I > 0) {
+            spin_string.nextPermutation();
+        }
+
+        for (size_t p = 0; p < this->K; p++) {  // p loops over SOs
+            if (spin_string.isOccupied(p)) {  // if p is occupied in I
+                double c_I = this->eigensolver_ptr->get_eigenvector(I);  // coefficient of the I-th basis vector
+                this->one_rdm_aa(p,p) += std::pow(c_I, 2);
+            }
+        }
+    }
+
+    // For DOCI, we have an additional symmetry
+    this->one_rdm_bb = this->one_rdm_aa;
+
+    this->one_rdm = this->one_rdm_aa + this->one_rdm_bb;
+
+    this->are_computed_one_rdms = true;
+}
+
+
+/**
+ *  Calculate all the 2-RDMS for DOCI.
+ */
+void DOCI::calculate2RDMs(){
+
+    // The formulas for the DOCI 2-RDMs can be found in (https://github.com/lelemmen/electronic_structure)
+
+
+    this->two_rdm_aaaa = Eigen::Tensor<double, 4>(this->K,this->K,this->K,this->K);
+    this->two_rdm_aaaa.setZero();
+    this->two_rdm_aabb = Eigen::Tensor<double, 4>(this->K,this->K,this->K,this->K);
+    this->two_rdm_aabb.setZero();
+
+    // Create the first spin string. Since in DOCI, alpha == beta, we can just treat them as one.
+    // TODO: determine when to switch from unsigned to unsigned long, unsigned long long or boost::dynamic_bitset<>
+    bmqc::SpinString<unsigned long> spin_string (0, this->addressing_scheme);  // spin string with address 0
+
+
+    for (size_t I = 0; I < this->dim; I++) {  // I loops over all the addresses of the spin strings
+        if (I > 0) {
+            spin_string.nextPermutation();
+        }
+
+        for (size_t p = 0; p < this->K; p++) {  // p loops over SOs
+            if (spin_string.annihilate(p)) {  // if p is occupied in I
+
+                double c_I = this->eigensolver_ptr->get_eigenvector(I);  // coefficient of the I-th basis vector
+                double c_I_2 = std::pow(c_I, 2);  // square of c_I
+
+                this->two_rdm_aabb(p,p,p,p) += c_I_2;
+
+                for (size_t q = 0; q < p; q++) {  // q loops over SOs with an index smaller than p
+                    if (spin_string.create(q)) {  // if q is not occupied in I
+                        size_t J = spin_string.address(this->addressing_scheme);  // the address of the coupling string
+                        double c_J = this->eigensolver_ptr->get_eigenvector(J);  // coefficient of the J-th basis vector
+
+                        this->two_rdm_aabb(p,q,p,q) += c_I * c_J;
+                        this->two_rdm_aabb(q,p,q,p) += c_I * c_J;  // since we're looping for q < p
+
+                        spin_string.annihilate(q);  // reset the spin string after previous creation on q
+                    }
+
+                    else {  // if q is occupied in I
+                        this->two_rdm_aaaa(p,p,q,q) += c_I_2;
+                        this->two_rdm_aaaa(q,q,p,p) += c_I_2;  // since we're looping for q < p
+
+                        this->two_rdm_aaaa(p,q,q,p) -= c_I_2;
+                        this->two_rdm_aaaa(q,p,p,q) -= c_I_2;  // since we're looping for q < p
+
+                        this->two_rdm_aabb(p,p,q,q) += c_I_2;
+                        this->two_rdm_aabb(q,q,p,p) += c_I_2;  // since we're looping for q < p
+                    }
+                }
+                spin_string.create(p);  // reset the spin string after previous annihilation on p
+            }
+        }
+    }
+
+    // For DOCI, we have additional symmetries
+    this->two_rdm_bbbb = this->two_rdm_aaaa;
+    this->two_rdm_bbaa = this->two_rdm_aabb;
+
+    this->two_rdm = this->two_rdm_aaaa + this->two_rdm_aabb + this->two_rdm_bbaa + this->two_rdm_bbbb;
+
+    this->are_computed_two_rdms = true;
+}
+
 
 
 }  // namespace ci
