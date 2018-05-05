@@ -1,7 +1,5 @@
+# exe-level CMakeLists.txt
 
-add_executable( doci.x
-  main.cpp )
+add_executable(doci.x main.cpp)
 
-configure_executable( doci.x )
-
-
+configure_executable(doci.x)
