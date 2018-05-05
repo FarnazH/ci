@@ -44,8 +44,8 @@ install:
   - cd /usr/local/
   - sudo tar --bzip2 -xf /tmp/boost/boost_1_65_1.tar.bz2
   - cd /usr/local/boost_1_65_1
-  - ./bootstrap.sh
-  - ./b2
+  - sudo ./bootstrap.sh
+  - sudo ./b2
   - export BOOST_ROOT=/usr/local/boost_1_65_1
 
 
