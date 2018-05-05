@@ -80,3 +80,53 @@ BOOST_AUTO_TEST_CASE ( lih_1RDM_2RDM_trace_DOCI ) {
 
     BOOST_CHECK(D.isApprox(D_from_reduction, 1.0e-12));
 }
+
+
+BOOST_AUTO_TEST_CASE ( lih_1RDM_trace ) {
+
+    // Test if the trace of the 1-RDM gives N
+
+
+    // Get the 1-RDM from DOCI
+    size_t N = 4;  // 4 electrons
+    size_t K = 16;  // 16 SOs
+    libwint:: SOBasis so_basis ("../tests/reference_data/lih_631g_caitlin.FCIDUMP", K);
+    ci::DOCI doci (so_basis, N);
+    doci.solve(numopt::eigenproblem::SolverType::DENSE);
+    doci.calculate1RDMs();
+
+    Eigen::MatrixXd D = doci.get_one_rdm();
+
+    BOOST_CHECK(std::abs(D.trace() - N) < 1.0e-12);
+}
+
+
+BOOST_AUTO_TEST_CASE ( lih_2RDM_trace ) {
+
+    // Test if the trace of the 2-RDM (d_ppqq) gives N(N-1)
+
+
+    // Get the 2-RDM from DOCI
+    size_t N = 4;  // 4 electrons
+    size_t K = 16;  // 16 SOs
+    libwint:: SOBasis so_basis ("../tests/reference_data/lih_631g_caitlin.FCIDUMP", K);
+    ci::DOCI doci (so_basis, N);
+    doci.solve(numopt::eigenproblem::SolverType::DENSE);
+    doci.calculate2RDMs();
+
+    Eigen::Tensor<double, 4> d = doci.get_two_rdm();
+
+    // Trace the 2-RDM
+    //      Specify the dimension that should be 'reduced' over     d(p p q q)
+    //      In this case, the 'trace' tensor operation should be used, but the current Eigen3 (3.3.4) hasn't released that support yet
+    // TODO: when Eigen3 releases tensor.trace(), use it to implement the reduction
+    // Since Eigen3 hasn't released tensor.trace() yet, we will do the reduction ourselves
+    double trace_value = 0.0;
+    for (size_t p = 0; p < K; p++) {
+        for (size_t q = 0; q < K; q++) {
+            trace_value += d(p,p,q,q);
+        }
+    }
+
+    BOOST_CHECK(std::abs(trace_value - N*(N-1)) < 1.0e-12);
+}

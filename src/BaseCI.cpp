@@ -1,3 +1,19 @@
+// This file is part of GQCG-ci.
+// 
+// Copyright (C) 2017-2018  the GQCG developers
+// 
+// GQCG-ci is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// 
+// GQCG-ci is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// 
+// You should have received a copy of the GNU Lesser General Public License
+// along with GQCG-ci.  If not, see <http://www.gnu.org/licenses/>.
 #include "BaseCI.hpp"
 
 #include <numopt.hpp>
@@ -93,7 +109,7 @@ void BaseCI::solve(numopt::eigenproblem::SolverType solver_type) {
 
             // HARTREE-FOCK INITIAL GUESS
             Eigen::VectorXd t_0 = Eigen::VectorXd::Zero(this->dim);
-            t_0(this->dim-1) = 1;  // in reverse lexical notation, the Hartree-Fock determinant has the highest address
+            t_0(0) = 1;  // in lexical notation, the Hartree-Fock determinant has the lowest address
 
             // RANDOM INITIAL GUESS
 //            Eigen::VectorXd t_0 = Eigen::VectorXd::Random(this->dim);

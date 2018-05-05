@@ -5,7 +5,7 @@
 find_package(Boost REQUIRED)
 
 # Find Eigen3
-find_package(Eigen3 REQUIRED NO_MODULE)
+find_package(Eigen3 3.3.4 REQUIRED)
 
 # Find hf
 find_package(hf 3.0.0 REQUIRED)
