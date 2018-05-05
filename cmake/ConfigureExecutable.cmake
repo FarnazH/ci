@@ -10,6 +10,7 @@ function(configure_executable EXECUTABLE_NAME)
 
     # Include boost
     target_include_directories(${EXECUTABLE_NAME} PUBLIC ${Boost_INCLUDE_DIRS})
+    target_link_libraries(${EXECUTABLE_NAME} PUBLIC ${Boost_LIBRARIES})
 
 
     # Include Eigen

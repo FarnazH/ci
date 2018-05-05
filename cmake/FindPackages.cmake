@@ -2,7 +2,7 @@
 
 
 # Find the Boost package - needed for unittests
-find_package(Boost REQUIRED)
+find_package(Boost REQUIRED COMPONENTS program_options)
 
 # Find Eigen3
 find_package(Eigen3 3.3.4 REQUIRED)
