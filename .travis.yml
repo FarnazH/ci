@@ -41,14 +41,16 @@ install:
   # We need relatively recent boost libraries, and APT doesn't provide these.
   # since compiling Boost takes around 15 minutes on Travis, it is a good idea to cache it (see also below)
   - |
-    if [ ! -d /usr/local/boost_1_65_1 ]; then
-      mkdir /tmp/boost && cd /tmp/boost
+    if [ ! -d /tmp/boost/boost_1_65_1 ]; then    
+      mkdir -p /tmp/boost && cd /tmp/boost
       curl -OL "https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.bz2"
-      cd /usr/local/
-      sudo tar --bzip2 -xf /tmp/boost/boost_1_65_1.tar.bz2
-      cd /usr/local/boost_1_65_1
+      sudo tar --bzip2 -xf boost_1_65_1.tar.bz2
+      cd boost_1_65_1
       sudo ./bootstrap.sh
-      sudo ./b2
+      sudo ./b2 /usr/local/boost_1_65_1
+    else
+      cd /tmp/boost/boost_1_65_1
+      sudo ./b2 /usr/local/boost_1_65_1
     fi
   - export BOOST_ROOT=/usr/local/boost_1_65_1
 
@@ -137,4 +139,4 @@ script:
 cache:
   directories:
     - /tmp/libint  # add the libint compilation to the cache
-    - /usr/local/boost_1_65_1  # add the Boost compilation to the cache
+    - /tmp/boost  # add the Boost compilation to the cache
