@@ -102,35 +102,40 @@ int main (int argc, char** argv) {
 
     // Calculate the DOCI 1- or 2-RDM if requested
     switch(variables_map["rdm"].as<int>()) {
-        case 0:
+        case 0: {
             break;
+        }
 
-        case 1:
+        case 1: {
             doci.calculate1RDMs();
             Eigen::MatrixXd one_rdm = doci.get_one_rdm();
             for (int i = 0; i < one_rdm.rows(); i++) {
                 for (int j = 0; j < one_rdm.cols(); j++) {
-                    std::cout << i << "\t" << j << "\t" << one_rdm(i,j) << std::endl;
+                    std::cout << i << "\t" << j << "\t" << one_rdm(i, j) << std::endl;
                 }
             }
             break;
+        }
 
-        case 2:
+        case 2: {
             doci.calculate2RDMs();
             Eigen::Tensor<double, 4> two_rdm = doci.get_two_rdm();
             for (int i = 0; i < two_rdm.dimensions()[0]; i++) {
                 for (int j = 0; j < two_rdm.dimensions()[1]; j++) {
                     for (int k = 0; k < two_rdm.dimensions()[2]; k++) {
                         for (int l = 0; l < two_rdm.dimensions()[3]; l++) {
-                            std::cout << i << "\t" << j << "\t" << k << "\t" << l << "\t" << two_rdm(i,j,k,l) << std::endl;
+                            std::cout << i << "\t" << j << "\t" << k << "\t" << l << "\t" << two_rdm(i, j, k, l)
+                                      << std::endl;
                         }
                     }
                 }
             }
             break;
+        }
 
-        default:
+        default: {
             break;
+        }
     }  // RDM switch
 
 }  // main
