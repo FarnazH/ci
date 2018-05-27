@@ -24,6 +24,9 @@ header_files = glob.glob(include_directory_path + "/*.hpp")
 src_directory_path = os.path.join(library_directory_path, 'src')
 source_files = glob.glob(src_directory_path + "/*.cpp")
 
+exe_directory_path = os.path.join(library_directory_path, 'exe')
+executable_files = glob.glob(exe_directory_path + "/*.cpp")
+
 
 # Add or update the header in every header (.hpp) or source file (.cpp)
 with open(header_path, 'r') as f_header:
@@ -31,7 +34,7 @@ with open(header_path, 'r') as f_header:
     header_text_commented = prepend_code(header_text, '// ')  # '//' for comments in C++
     header_text_commented += '\n'  # we need an extra (non-commented) newline at the end
 
-    for filename in (header_files + source_files):
+    for filename in (header_files + source_files + executable_files):
 
         with open(filename, 'r') as f_original:
             original_source_code = f_original.read()  # read the whole source code
