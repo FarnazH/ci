@@ -28,7 +28,9 @@ BOOST_AUTO_TEST_CASE ( FCI_H2_Cristina_dense ) {
 
     // Do a dense FCI calculation based on a given SO basis
     ci::FCI fci (so_basis, 1, 1);  // N_alpha = 1, N_beta = 1
-    fci.solve(numopt::eigenproblem::SolverType::DENSE);
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    fci.solve(&dense_options);
 
 
     // Calculate the total FCI energy
@@ -59,8 +61,9 @@ BOOST_AUTO_TEST_CASE ( FCI_H2O_Psi4_GAMESS_dense ) {
 
     // Do a dense FCI calculation based on a given SO basis
     ci::FCI fci (so_basis, 5, 5);  // N_alpha = 5, N_beta = 5
-    fci.solve(numopt::eigenproblem::SolverType::DENSE);
-
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    fci.solve(&dense_options);
 
     // Calculate the total energy
     double internuclear_repulsion_energy = water.calculateInternuclearRepulsionEnergy();
@@ -89,7 +92,9 @@ BOOST_AUTO_TEST_CASE ( FCI_He_Cristina_dense ) {
 
     // Do a dense FCI calculation based on a given SO basis
     ci::FCI fci (so_basis, 1, 1);  // N_alpha = 1, N_beta = 1
-    fci.solve(numopt::eigenproblem::SolverType::DENSE);
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    fci.solve(&dense_options);
 
 
     // Calculate (get) the total FCI energy

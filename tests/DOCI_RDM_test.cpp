@@ -72,7 +72,9 @@ BOOST_AUTO_TEST_CASE ( lih_1RDM_trace ) {
     size_t K = 16;  // 16 SOs
     libwint:: SOBasis so_basis ("../tests/reference_data/lih_631g_caitlin.FCIDUMP", K);
     ci::DOCI doci (so_basis, N);
-    doci.solve(numopt::eigenproblem::SolverType::DENSE);
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    doci.solve(&dense_options);
     doci.calculate1RDMs();
 
     Eigen::MatrixXd D = doci.get_one_rdm();
@@ -91,7 +93,9 @@ BOOST_AUTO_TEST_CASE ( lih_2RDM_trace ) {
     size_t K = 16;  // 16 SOs
     libwint:: SOBasis so_basis ("../tests/reference_data/lih_631g_caitlin.FCIDUMP", K);
     ci::DOCI doci (so_basis, N);
-    doci.solve(numopt::eigenproblem::SolverType::DENSE);
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    doci.solve(&dense_options);
     doci.calculate2RDMs();
 
     Eigen::Tensor<double, 4> d = doci.get_two_rdm();
@@ -112,7 +116,9 @@ BOOST_AUTO_TEST_CASE ( lih_1RDM_2RDM_trace_DOCI ) {
     size_t K = 16;  // 16 SOs
     libwint:: SOBasis so_basis ("../tests/reference_data/lih_631g_caitlin.FCIDUMP", K);
     ci::DOCI doci (so_basis, N);
-    doci.solve(numopt::eigenproblem::SolverType::DENSE);
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    doci.solve(&dense_options);
     doci.calculate1RDMs();
     doci.calculate2RDMs();
 
@@ -136,7 +142,9 @@ BOOST_AUTO_TEST_CASE ( lih_energy_RDM_contraction_DOCI ) {
     Eigen::Tensor<double, 4> g = so_basis.get_g_SO();
 
     ci::DOCI doci (so_basis, 4);  // 4 electrons
-    doci.solve(numopt::eigenproblem::SolverType::DENSE);
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    doci.solve(&dense_options);
     double energy_by_eigenvalue = doci.get_eigenvalue();
 
 

@@ -93,8 +93,9 @@ int main (int argc, char** argv) {
 
     // Do the DOCI calculation
     ci::DOCI doci (so_basis, molecule);
-
-    doci.solve(numopt::eigenproblem::SolverType::DAVIDSON);
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    doci.solve(&davidson_options);
     double doci_energy = doci.get_eigenvalue() + internuclear_repulsion_energy;
 
     std::cout << "DOCI energy: " << std::setprecision(15) << doci_energy << std::endl;
