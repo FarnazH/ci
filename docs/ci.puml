@@ -151,16 +151,16 @@ namespace ci {
             + size_t **get_dim**() const
             + double **get_eigenvalue**() const
             + Eigen::VectorXd **get_eigenvector**() const
-            + Eigen::MatrixXd get_one_rdm_aa() const
-            + Eigen::MatrixXd get_one_rdm_bb() const
-            + Eigen::Tensor<double, 4> get_two_rdm_aaaa() const
-            + Eigen::Tensor<double, 4> get_two_rdm_aabb() const
-            + Eigen::Tensor<double, 4> get_two_rdm_bbaa() const
-            + Eigen::Tensor<double, 4> get_two_rdm_bbbb() const
+            + Eigen::MatrixXd **get_one_rdm_aa**() const
+            + Eigen::MatrixXd **get_one_rdm_bb**() const
+            + Eigen::Tensor<double, 4> **get_two_rdm_aaaa**() const
+            + Eigen::Tensor<double, 4> **get_two_rdm_aabb**() const
+            + Eigen::Tensor<double, 4> **get_two_rdm_bbaa**() const
+            + Eigen::Tensor<double, 4> **get_two_rdm_bbbb**() const
 
             + void **solve**(ci::solver::SolverType solver_type)
-            + {abstract} virtual void compute1RDM()=0
-            + {abstract} virtual void compute2RDM()=0
+            + {abstract} virtual void **compute1RDM**()=0
+            + {abstract} virtual void **compute2RDM**()=0
     }
     ci.BaseCI *--> numopt.eigenproblem.BaseEigenproblemSolver
     ci.BaseCI *--> bmqc.SpinString
@@ -186,6 +186,8 @@ namespace ci {
             + {static} **calculateDimension**(size_t K, size_t N_P)
             + void **calculate1RDMs**() override
             + void **calculate2RDMs**() override
+
+            + void **orbitalOptimize**()
     }
 
     ci.FCI --|> ci.BaseCI

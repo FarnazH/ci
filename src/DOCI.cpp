@@ -16,14 +16,14 @@
 // along with GQCG-ci.  If not, see <http://www.gnu.org/licenses/>.
 #include "DOCI.hpp"
 
-
+#include <cpputil.hpp>
 
 #include <boost/numeric/conversion/converter.hpp>
 #include <boost/math/special_functions.hpp>
+#include <unsupported/Eigen/MatrixFunctions>
 
 
-
-#include <chrono>
+#include <chrono>  // I don't think we need this anymore
 
 
 
@@ -315,6 +315,69 @@ void DOCI::calculate2RDMs(){
     this->are_computed_two_rdms = true;
 }
 
+
+/**
+ *  Perform Newton-step-based orbital optimization
+ */
+void DOCI::orbitalOptimize() {
+
+    // Solve the DOCI eigenvalue equation
+    this->solve(numopt::eigenproblem::SolverType::DAVIDSON);
+    std::cout << this->get_eigenvalue() << std::endl;
+
+
+    // Calculate the 1- and 2-RDMs
+    this->calculate1RDMs();
+    this->calculate2RDMs();
+
+
+    // Calculate the electronic gradient at kappa=0
+    Eigen::MatrixXd F = this->so_basis.calculateGeneralizedFockMatrix(this->one_rdm, this->two_rdm);
+    Eigen::MatrixXd gradient_matrix = 2 * (F - F.transpose());
+    Eigen::Map<Eigen::VectorXd> gradient_vector (gradient_matrix.data(), gradient_matrix.cols()*gradient_matrix.rows());
+
+
+    // Calculate the electronic Hessian at kappa=0
+    Eigen::Tensor<double, 4> W = this->so_basis.calculateSuperGeneralizedFockMatrix(this->one_rdm, this->two_rdm);
+    Eigen::Tensor<double, 4> hessian_tensor (this->K, this->K, this->K, this->K);
+    hessian_tensor.setZero();
+
+    for (size_t p = 0; p < this->K; p++) {
+        for (size_t q = 0; q < this->K; q++) {
+            for (size_t r = 0; r < this->K; r++) {
+                for (size_t s = 0; s < this->K; s++) {
+                    hessian_tensor(p,q,r,s) = W(p,q,r,s) - W(p,q,s,r) + W(q,p,s,r) - W(q,p,r,s) + W(r,s,p,q) - W(r,s,q,p) + W(s,r,q,p) - W(s,r,p,q);
+                }
+            }
+        }
+    }
+    Eigen::MatrixXd hessian_matrix = cpputil::linalg::toMatrix(hessian_tensor);
+
+
+    // Perform a Newton-step to find orbital rotation parameters kappa
+    numopt::GradientFunction gradient_function = [gradient_vector](const Eigen::VectorXd& x) { return gradient_vector; };
+    numopt::JacobianFunction hessian_function = [hessian_matrix](const Eigen::VectorXd& x) { return hessian_matrix; };
+
+    Eigen::VectorXd kappa_vector = numopt::newtonStep(Eigen::VectorXd::Zero(this->K), gradient_function, hessian_function);
+
+
+    // Change kappa back to a matrix
+    Eigen::Map<Eigen::MatrixXd> kappa_matrix (kappa_vector.data(), this->K, this->K);
+
+
+    // Calculate the unitary rotation matrix
+    Eigen::MatrixXd U = kappa_matrix.exp();
+
+
+    // Transform the integrals to the new orthonormal basis
+    // TODO: when the review is accepted, use this function
+    // this->so_basis.rotate(U);
+    assert(U.isUnitary(1.0e-12));
+    this->so_basis.transform(U);
+
+
+
+}
 
 
 }  // namespace ci
