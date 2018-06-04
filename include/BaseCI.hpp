@@ -137,9 +137,9 @@ public:
 
     // PUBLIC METHODS
     /**
-     *  Find the lowest energy eigenpair of the Hamiltonian, using a @param solver_type.
+     *  Providing a @param solver_options_ptr, find (the) lowest energy eigenpair(s) of the Hamiltonian
      */
-    void solve(numopt::eigenproblem::SolverType solver_type);
+    void solve(numopt::eigenproblem::BaseSolverOptions* solver_options_ptr);
 
     /**
      *  Calculate all the 1-RDMs.

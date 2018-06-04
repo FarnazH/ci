@@ -45,13 +45,17 @@ BOOST_AUTO_TEST_CASE ( DOCI_h2_sto3g_dense_vs_Davidson ) {
 
     // Calculate the DOCI energy using full diagonalization of the dense Hamiltonian
     ci::DOCI doci_dense (so_basis, h2);
-    doci_dense.solve(numopt::eigenproblem::SolverType::DENSE);
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    doci_dense.solve(&dense_options);
     double doci_energy_dense = doci_dense.get_eigenvalue() + internuclear_repulsion_energy;
 
 
     // Calculate the DOCI energy using the Davidson algorithm
     ci::DOCI doci_davidson (so_basis, h2);
-    doci_davidson.solve(numopt::eigenproblem::SolverType::DAVIDSON);
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    doci_davidson.solve(&davidson_options);
     double doci_energy_davidson = doci_davidson.get_eigenvalue() + internuclear_repulsion_energy;
 
 
@@ -78,13 +82,17 @@ BOOST_AUTO_TEST_CASE ( DOCI_h2_631g_dense_vs_Davidson ) {
 
     // Calculate the DOCI energy using full diagonalization of the dense Hamiltonian
     ci::DOCI doci_dense (so_basis, h2);
-    doci_dense.solve(numopt::eigenproblem::SolverType::DENSE);
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    doci_dense.solve(&dense_options);
     double doci_energy_dense = doci_dense.get_eigenvalue() + internuclear_repulsion_energy;
 
 
     // Calculate the DOCI energy using the Davidson algorithm
     ci::DOCI doci_davidson (so_basis, h2);
-    doci_davidson.solve(numopt::eigenproblem::SolverType::DAVIDSON);
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    doci_davidson.solve(&davidson_options);
     double doci_energy_davidson = doci_davidson.get_eigenvalue() + internuclear_repulsion_energy;
 
 
@@ -102,7 +110,10 @@ BOOST_AUTO_TEST_CASE ( DOCI_h2o_sto3g_klaas_Davidson ) {
     // Do a DOCI calculation based on a given FCIDUMP file
     libwint::SOBasis so_basis ("../tests/reference_data/h2o_sto3g_klaas.FCIDUMP", 7);  // 7 SOs
     ci::DOCI doci (so_basis, 10);  // 10 electrons
-    doci.solve(numopt::eigenproblem::SolverType::DAVIDSON);
+
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    doci.solve(&davidson_options);
 
 
     // Calculate the total energy
@@ -124,7 +135,10 @@ BOOST_AUTO_TEST_CASE ( DOCI_beh_cation_631g_klaas_Davidson ) {
     // Do a DOCI calculation based on a given FCIDUMP file
     libwint::SOBasis so_basis ("../tests/reference_data/beh_cation_631g_caitlin.FCIDUMP", 16);  // 16 SOs
     ci::DOCI doci (so_basis, 4);  // 4 electrons
-    doci.solve(numopt::eigenproblem::SolverType::DAVIDSON);
+
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    doci.solve(&davidson_options);
 
 
     // Calculate the total energy
@@ -146,7 +160,10 @@ BOOST_AUTO_TEST_CASE ( DOCI_n2_sto3g_klaas_Davidson ) {
     // Do a DOCI calculation based on a given FCIDUMP file
     libwint::SOBasis so_basis ("../tests/reference_data/n2_sto-3g_klaas.FCIDUMP", 10);  // 10 SOs
     ci::DOCI doci (so_basis, 14);  // 10 electrons
-    doci.solve(numopt::eigenproblem::SolverType::DAVIDSON);
+
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    doci.solve(&davidson_options);
 
 
     // Calculate the total energy
@@ -168,7 +185,10 @@ BOOST_AUTO_TEST_CASE ( DOCI_lih_631g_klaas_Davidson ) {
     // Do a DOCI calculation based on a given FCIDUMP file
     libwint::SOBasis so_basis ("../tests/reference_data/lih_631g_caitlin.FCIDUMP", 16);  // 16 SOs
     ci::DOCI doci (so_basis, 4);  // 4 electrons
-    doci.solve(numopt::eigenproblem::SolverType::DAVIDSON);
+
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    doci.solve(&davidson_options);
 
 
     // Calculate the total energy
@@ -190,7 +210,10 @@ BOOST_AUTO_TEST_CASE ( DOCI_li2_321g_klaas_Davidson ) {
     // Do a DOCI calculation based on a given FCIDUMP file
     libwint::SOBasis so_basis ("../tests/reference_data/li2_321g_klaas.FCIDUMP", 18);  // 18 SOs
     ci::DOCI doci (so_basis, 6);  // 6 electrons
-    doci.solve(numopt::eigenproblem::SolverType::DAVIDSON);
+
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    doci.solve(&davidson_options);
 
 
     // Calculate the total energy
@@ -212,7 +235,10 @@ BOOST_AUTO_TEST_CASE ( DOCI_h2o_631g_klaas_Davidson ) {
     // Do a DOCI calculation based on a given FCIDUMP file
     libwint::SOBasis so_basis ("../tests/reference_data/h2o_631g_klaas.FCIDUMP", 13);  // 13 SOs
     ci::DOCI doci (so_basis, 10);  // 10 electrons
-    doci.solve(numopt::eigenproblem::SolverType::DAVIDSON);
+
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    doci.solve(&davidson_options);
 
 
     // Calculate the total energy
@@ -234,7 +260,10 @@ BOOST_AUTO_TEST_CASE ( DOCI_lif_631g_klaas_Davidson ) {
     // Do a DOCI calculation based on a given FCIDUMP file
     libwint::SOBasis so_basis ("../tests/reference_data/lif_631g_klaas.FCIDUMP", 28);  // 28 SOs
     ci::DOCI doci (so_basis, 12);  // 12 electrons
-    doci.solve(numopt::eigenproblem::SolverType::DAVIDSON);
+
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    doci.solve(&davidson_options);
 
 
     // Calculate the total energy
@@ -256,7 +285,10 @@ BOOST_AUTO_TEST_CASE ( DOCI_co_631g_klaas_Davidson ) {
     // Do a DOCI calculation based on a given FCIDUMP file
     libwint::SOBasis so_basis ("../tests/reference_data/co_631g_klaas.FCIDUMP", 28);  // 28 SOs
     ci::DOCI doci (so_basis, 14);  // 14 electrons
-    doci.solve(numopt::eigenproblem::SolverType::DAVIDSON);
+
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    doci.solve(&davidson_options);
 
 
     // Calculate the total energy

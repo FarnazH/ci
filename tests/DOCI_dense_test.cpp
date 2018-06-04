@@ -18,7 +18,10 @@ BOOST_AUTO_TEST_CASE ( DOCI_beh_cation_klaas_dense ) {
     // Do a DOCI calculation based on a given FCIDUMP file
     libwint::SOBasis so_basis ("../tests/reference_data/beh_cation_631g_caitlin.FCIDUMP", 16);  // 16 SOs
     ci::DOCI doci (so_basis, 4);  // 4 electrons
-    doci.solve(numopt::eigenproblem::SolverType::DENSE);
+
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    doci.solve(&dense_options);
 
 
     // Calculate the total energy
@@ -39,7 +42,10 @@ BOOST_AUTO_TEST_CASE ( DOCI_lih_klaas_dense ) {
     // Do a DOCI calculation based on a given FCIDUMP file
     libwint::SOBasis so_basis ("../tests/reference_data/lih_631g_caitlin.FCIDUMP", 16);  // 16 SOs
     ci::DOCI doci (so_basis, 4);  // 4 electrons
-    doci.solve(numopt::eigenproblem::SolverType::DENSE);
+
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    doci.solve(&dense_options);
 
 
     // Calculate the total energy
@@ -60,13 +66,15 @@ BOOST_AUTO_TEST_CASE ( DOCI_li2_klaas_dense ) {
     // Do a DOCI calculation based on a given FCIDUMP file
     libwint::SOBasis so_basis ("../tests/reference_data/li2_321g_klaas.FCIDUMP", 18);  // 18 SOs
     ci::DOCI doci (so_basis, 6);  // 6 electrons
-    doci.solve(numopt::eigenproblem::SolverType::DENSE);
+
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    doci.solve(&dense_options);
 
 
     // Calculate the total energy
     double internuclear_repulsion_energy = 3.0036546888874875e+00;  // this comes straight out of the FCIDUMP file
     double test_doci_energy = doci.get_eigenvalue() + internuclear_repulsion_energy;
-    std::cout << "DOCI ENERGY: " << test_doci_energy << std::endl;
 
     BOOST_CHECK(std::abs(test_doci_energy - (reference_doci_energy)) < 1.0e-9);
 }

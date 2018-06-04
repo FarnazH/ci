@@ -322,7 +322,7 @@ void DOCI::calculate2RDMs(){
 void DOCI::orbitalOptimize() {
 
     // Solve the DOCI eigenvalue equation
-    this->solve(numopt::eigenproblem::SolverType::DAVIDSON);
+    // this->solve(numopt::eigenproblem::SolverType::DAVIDSON);
     std::cout << this->get_eigenvalue() << std::endl;
 
 

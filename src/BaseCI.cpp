@@ -74,16 +74,16 @@ BaseCI::~BaseCI() {
  */
 
 /**
- *  Find the lowest energy eigenpair of the Hamiltonian, using a @param solver_type.
+ *  Providing a @param solver_options_ptr, find (the) lowest energy eigenpair(s) of the Hamiltonian
  */
-void BaseCI::solve(numopt::eigenproblem::SolverType solver_type) {
+void BaseCI::solve(numopt::eigenproblem::BaseSolverOptions* solver_options_ptr) {
 
     // Before solving anything, we should calculate the diagonal
     this->calculateDiagonal();
 
 
     // Depending on how the user wants to solve the eigenvalue problem, construct the appropriate solver
-    switch (solver_type) {
+    switch (solver_options_ptr->get_solver_type()) {
 
         case numopt::eigenproblem::SolverType::DENSE: {
             auto dense_solver = new numopt::eigenproblem::DenseSolver(this->dim);
@@ -118,6 +118,9 @@ void BaseCI::solve(numopt::eigenproblem::SolverType solver_type) {
             this->eigensolver_ptr->solve();
             break;
         }
+
+        default:
+            throw std::runtime_error("Oops, something went wrong.");
 
     }
 
