@@ -86,6 +86,11 @@ public:
      *  Calculate all the 2-RDMS for DOCI.
      */
     void calculate2RDMs() override;
+
+    /**
+     *  Perform Newton-step-based orbital optimization
+     */
+    void orbitalOptimize();
 };
 
 
