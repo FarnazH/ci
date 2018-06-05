@@ -93,9 +93,15 @@ int main (int argc, char** argv) {
 
     // Do the DOCI calculation
     ci::DOCI doci (so_basis, molecule);
+
     // Specify solver options and solve the eigenvalue problem
     numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    //  In lexical notation, the Hartree-Fock determinant has the lowest address
+    Eigen::VectorXd initial_guess = Eigen::VectorXd::Zero(doci.get_dim());
+    initial_guess(0) = 1;
+    davidson_options.X_0 = initial_guess;
     doci.solve(&davidson_options);
+
     double doci_energy = doci.get_eigenvalue() + internuclear_repulsion_energy;
 
     std::cout << "DOCI energy: " << std::setprecision(15) << doci_energy << std::endl;

@@ -45,6 +45,7 @@ BOOST_AUTO_TEST_CASE ( DOCI_h2_sto3g_dense_vs_Davidson ) {
 
     // Calculate the DOCI energy using full diagonalization of the dense Hamiltonian
     ci::DOCI doci_dense (so_basis, h2);
+
     // Specify solver options and solve the eigenvalue problem
     numopt::eigenproblem::DenseSolverOptions dense_options;
     doci_dense.solve(&dense_options);
@@ -55,6 +56,10 @@ BOOST_AUTO_TEST_CASE ( DOCI_h2_sto3g_dense_vs_Davidson ) {
     ci::DOCI doci_davidson (so_basis, h2);
     // Specify solver options and solve the eigenvalue problem
     numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    //  In lexical notation, the Hartree-Fock determinant has the lowest address
+    Eigen::VectorXd initial_guess = Eigen::VectorXd::Zero(doci_davidson.get_dim());
+    initial_guess(0) = 1;
+    davidson_options.X_0 = initial_guess;
     doci_davidson.solve(&davidson_options);
     double doci_energy_davidson = doci_davidson.get_eigenvalue() + internuclear_repulsion_energy;
 
@@ -92,6 +97,10 @@ BOOST_AUTO_TEST_CASE ( DOCI_h2_631g_dense_vs_Davidson ) {
     ci::DOCI doci_davidson (so_basis, h2);
     // Specify solver options and solve the eigenvalue problem
     numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    //  In lexical notation, the Hartree-Fock determinant has the lowest address
+    Eigen::VectorXd initial_guess = Eigen::VectorXd::Zero(doci_davidson.get_dim());
+    initial_guess(0) = 1;
+    davidson_options.X_0 = initial_guess;
     doci_davidson.solve(&davidson_options);
     double doci_energy_davidson = doci_davidson.get_eigenvalue() + internuclear_repulsion_energy;
 
@@ -113,6 +122,10 @@ BOOST_AUTO_TEST_CASE ( DOCI_h2o_sto3g_klaas_Davidson ) {
 
     // Specify solver options and solve the eigenvalue problem
     numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    //  In lexical notation, the Hartree-Fock determinant has the lowest address
+    Eigen::VectorXd initial_guess = Eigen::VectorXd::Zero(doci.get_dim());
+    initial_guess(0) = 1;
+    davidson_options.X_0 = initial_guess;
     doci.solve(&davidson_options);
 
 
@@ -138,6 +151,10 @@ BOOST_AUTO_TEST_CASE ( DOCI_beh_cation_631g_klaas_Davidson ) {
 
     // Specify solver options and solve the eigenvalue problem
     numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    //  In lexical notation, the Hartree-Fock determinant has the lowest address
+    Eigen::VectorXd initial_guess = Eigen::VectorXd::Zero(doci.get_dim());
+    initial_guess(0) = 1;
+    davidson_options.X_0 = initial_guess;
     doci.solve(&davidson_options);
 
 
@@ -163,6 +180,10 @@ BOOST_AUTO_TEST_CASE ( DOCI_n2_sto3g_klaas_Davidson ) {
 
     // Specify solver options and solve the eigenvalue problem
     numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    //  In lexical notation, the Hartree-Fock determinant has the lowest address
+    Eigen::VectorXd initial_guess = Eigen::VectorXd::Zero(doci.get_dim());
+    initial_guess(0) = 1;
+    davidson_options.X_0 = initial_guess;
     doci.solve(&davidson_options);
 
 
@@ -188,6 +209,10 @@ BOOST_AUTO_TEST_CASE ( DOCI_lih_631g_klaas_Davidson ) {
 
     // Specify solver options and solve the eigenvalue problem
     numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    //  In lexical notation, the Hartree-Fock determinant has the lowest address
+    Eigen::VectorXd initial_guess = Eigen::VectorXd::Zero(doci.get_dim());
+    initial_guess(0) = 1;
+    davidson_options.X_0 = initial_guess;
     doci.solve(&davidson_options);
 
 
@@ -213,6 +238,10 @@ BOOST_AUTO_TEST_CASE ( DOCI_li2_321g_klaas_Davidson ) {
 
     // Specify solver options and solve the eigenvalue problem
     numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    //  In lexical notation, the Hartree-Fock determinant has the lowest address
+    Eigen::VectorXd initial_guess = Eigen::VectorXd::Zero(doci.get_dim());
+    initial_guess(0) = 1;
+    davidson_options.X_0 = initial_guess;
     doci.solve(&davidson_options);
 
 
@@ -238,6 +267,10 @@ BOOST_AUTO_TEST_CASE ( DOCI_h2o_631g_klaas_Davidson ) {
 
     // Specify solver options and solve the eigenvalue problem
     numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    //  In lexical notation, the Hartree-Fock determinant has the lowest address
+    Eigen::VectorXd initial_guess = Eigen::VectorXd::Zero(doci.get_dim());
+    initial_guess(0) = 1;
+    davidson_options.X_0 = initial_guess;
     doci.solve(&davidson_options);
 
 
@@ -263,6 +296,10 @@ BOOST_AUTO_TEST_CASE ( DOCI_lif_631g_klaas_Davidson ) {
 
     // Specify solver options and solve the eigenvalue problem
     numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    //  In lexical notation, the Hartree-Fock determinant has the lowest address
+    Eigen::VectorXd initial_guess = Eigen::VectorXd::Zero(doci.get_dim());
+    initial_guess(0) = 1;
+    davidson_options.X_0 = initial_guess;
     doci.solve(&davidson_options);
 
 
@@ -288,6 +325,10 @@ BOOST_AUTO_TEST_CASE ( DOCI_co_631g_klaas_Davidson ) {
 
     // Specify solver options and solve the eigenvalue problem
     numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    //  In lexical notation, the Hartree-Fock determinant has the lowest address
+    Eigen::VectorXd initial_guess = Eigen::VectorXd::Zero(doci.get_dim());
+    initial_guess(0) = 1;
+    davidson_options.X_0 = initial_guess;
     doci.solve(&davidson_options);
 
 
