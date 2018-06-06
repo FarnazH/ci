@@ -136,6 +136,9 @@ Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
 void DOCI::calculateDiagonal() {
 
 
+    // When calling this->solve twice for the Davidson solver, we need to produce consistent results: (re)set the diagonal to zero!
+    this->diagonal = Eigen::VectorXd::Zero(this->dim);
+
 
     // TODO: determine when to switch from unsigned to unsigned long, unsigned long long or boost::dynamic_bitset<>
     bmqc::SpinString<unsigned long> spin_string (0, this->addressing_scheme);
@@ -171,13 +174,16 @@ DOCI::DOCI(libwint::SOBasis& so_basis, size_t N) :
     BaseCI(so_basis, this->calculateDimension(so_basis.get_K(), N / 2)),
     K (so_basis.get_K()),
     N_P (N / 2),
-    addressing_scheme (bmqc::AddressingScheme(this->K, this->N_P)) // since in DOCI, alpha==beta, we should make an
-                                                                   // addressing scheme with the number of PAIRS.
+    addressing_scheme (bmqc::AddressingScheme(this->K, this->N_P))  // since in DOCI, alpha==beta, we should make an
+                                                                    // addressing scheme with the number of PAIRS.
 {
     // Do some input checks
     if ((N % 2) != 0) {
         throw std::invalid_argument("You gave an odd amount of electrons, which is not suitable for DOCI.");
     }
+
+    // We can already calculate the diagonal, since this only has to be done once
+    this->calculateDiagonal();
 }
 
 
