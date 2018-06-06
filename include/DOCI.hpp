@@ -90,7 +90,7 @@ public:
     /**
      *  Perform Newton-step-based orbital optimization
      */
-    void orbitalOptimize();
+    void orbitalOptimize(numopt::eigenproblem::DavidsonSolverOptions* davidson_solver_options_ptr);
 };
 
 
