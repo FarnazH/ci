@@ -332,7 +332,10 @@ FCI::FCI(libwint::SOBasis& so_basis, size_t N_alpha, size_t N_beta) :
         dim_beta (ci::FCI::calculateDimension(so_basis.get_K(), 0, N_beta)),
         alpha_one_electron_couplings (this->dim_alpha, std::vector<OneElectronCoupling>(this->N_alpha * (this->K + 1 - this->N_alpha))),
         beta_one_electron_couplings (this->dim_beta, std::vector<OneElectronCoupling>(this->N_beta * (this->K + 1 - this->N_beta)))
-{}
+{
+    // We can already calculate the diagonal, since this only has to be done once
+    this->calculateDiagonal();
+}
 
 
 

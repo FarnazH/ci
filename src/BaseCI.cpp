@@ -78,11 +78,6 @@ BaseCI::~BaseCI() {
  */
 void BaseCI::solve(numopt::eigenproblem::BaseSolverOptions* solver_options_ptr) {
 
-    // Before solving anything, we should calculate the diagonal
-    this->calculateDiagonal();
-
-    std::cout <<
-
 
     // Depending on how the user wants to solve the eigenvalue problem, construct the appropriate solver
     switch (solver_options_ptr->get_solver_type()) {
