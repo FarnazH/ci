@@ -135,6 +135,8 @@ Eigen::VectorXd DOCI::matrixVectorProduct(const Eigen::VectorXd& x) {
  */
 void DOCI::calculateDiagonal() {
 
+
+
     // TODO: determine when to switch from unsigned to unsigned long, unsigned long long or boost::dynamic_bitset<>
     bmqc::SpinString<unsigned long> spin_string (0, this->addressing_scheme);
 
@@ -319,64 +321,151 @@ void DOCI::calculate2RDMs(){
 /**
  *  Perform Newton-step-based orbital optimization
  */
-void DOCI::orbitalOptimize() {
-
-    // Solve the DOCI eigenvalue equation
-    // this->solve(numopt::eigenproblem::SolverType::DAVIDSON);
-    std::cout << this->get_eigenvalue() << std::endl;
+void DOCI::orbitalOptimize(numopt::eigenproblem::DavidsonSolverOptions* davidson_solver_options_ptr) {
 
 
-    // Calculate the 1- and 2-RDMs
-    this->calculate1RDMs();
-    this->calculate2RDMs();
+    // TODO: decide on wanting to implement orbital optimization for other solvers
+    // TODO: decide on if we want to make a copy of the solver options: the user should know its solver options are getting overwritten
+    numopt::eigenproblem::DavidsonSolverOptions davidson_solver_options = *davidson_solver_options_ptr;
+    numopt::eigenproblem::DenseSolverOptions dense_solver_options;
+
+    size_t orbital_optimization_iterations = 0;
+    size_t number_of_maximum_orbital_optimization_iterations = 128;
+    double convergence_threshold = 1.0e-08;
 
 
-    // Calculate the electronic gradient at kappa=0
-    Eigen::MatrixXd F = this->so_basis.calculateGeneralizedFockMatrix(this->one_rdm, this->two_rdm);
-    Eigen::MatrixXd gradient_matrix = 2 * (F - F.transpose());
-    Eigen::Map<Eigen::VectorXd> gradient_vector (gradient_matrix.data(), gradient_matrix.cols()*gradient_matrix.rows());
+    // Solve the DOCI eigenvalue equation, using the options provided
+//    this->solve(davidson_solver_options_ptr);
+    this->solve(&dense_solver_options);
+    double old_eigenvalue = this->get_lowest_eigenvalue();
+    std::cout << "Original energy: " << old_eigenvalue << std::endl;
 
 
-    // Calculate the electronic Hessian at kappa=0
-    Eigen::Tensor<double, 4> W = this->so_basis.calculateSuperGeneralizedFockMatrix(this->one_rdm, this->two_rdm);
-    Eigen::Tensor<double, 4> hessian_tensor (this->K, this->K, this->K, this->K);
-    hessian_tensor.setZero();
+    bool is_converged = false;
+    while (!is_converged) {
 
-    for (size_t p = 0; p < this->K; p++) {
-        for (size_t q = 0; q < this->K; q++) {
-            for (size_t r = 0; r < this->K; r++) {
-                for (size_t s = 0; s < this->K; s++) {
-                    hessian_tensor(p,q,r,s) = W(p,q,r,s) - W(p,q,s,r) + W(q,p,s,r) - W(q,p,r,s) + W(r,s,p,q) - W(r,s,q,p) + W(s,r,q,p) - W(s,r,p,q);
+
+        // Calculate the 1- and 2-RDMs
+        this->calculate1RDMs();
+        this->calculate2RDMs();
+
+
+        // Calculate the electronic gradient at kappa=0
+        Eigen::MatrixXd F = this->so_basis.calculateGeneralizedFockMatrix(this->one_rdm, this->two_rdm);
+        Eigen::MatrixXd gradient_matrix = 2 * (F - F.transpose());
+        Eigen::Map<Eigen::VectorXd> gradient_vector (gradient_matrix.data(), gradient_matrix.cols()*gradient_matrix.rows());  // at kappa = 0
+//        std::cout << "Gradient vector: " << std::endl << gradient_vector << std::endl << std::endl;
+
+
+        // Calculate the electronic Hessian at kappa=0
+        Eigen::Tensor<double, 4> W = this->so_basis.calculateSuperGeneralizedFockMatrix(this->one_rdm, this->two_rdm);
+        Eigen::Tensor<double, 4> hessian_tensor (this->K, this->K, this->K, this->K);
+        hessian_tensor.setZero();
+
+        for (size_t p = 0; p < this->K; p++) {
+            for (size_t q = 0; q < this->K; q++) {
+                for (size_t r = 0; r < this->K; r++) {
+                    for (size_t s = 0; s < this->K; s++) {
+                        hessian_tensor(p,q,r,s) = W(p,q,r,s) - W(p,q,s,r) + W(q,p,s,r) - W(q,p,r,s) + W(r,s,p,q) - W(r,s,q,p) + W(s,r,q,p) - W(s,r,p,q);
+                    }
                 }
             }
         }
-    }
-    Eigen::MatrixXd hessian_matrix = cpputil::linalg::toMatrix(hessian_tensor);
+        Eigen::MatrixXd hessian_matrix = cpputil::linalg::toMatrix(hessian_tensor);  // at kappa = 0
+        assert(hessian_matrix.isApprox(hessian_matrix.transpose()));
+
+        Eigen::array<int, 4> shuffle {1, 0, 2, 3};
+        Eigen::Tensor<double, 4> hessian_tensor_qp = hessian_tensor.shuffle(shuffle);
+        Eigen::MatrixXd hessian_matrix_qp = cpputil::linalg::toMatrix(hessian_tensor_qp);
+
+        assert(hessian_matrix.isApprox(-hessian_matrix_qp));
 
 
-    // Perform a Newton-step to find orbital rotation parameters kappa
-    numopt::GradientFunction gradient_function = [gradient_vector](const Eigen::VectorXd& x) { return gradient_vector; };
-    numopt::JacobianFunction hessian_function = [hessian_matrix](const Eigen::VectorXd& x) { return hessian_matrix; };
+        // Try to calculate the Cholesky decomposition of the Hessian to check if it is positive definite
+        Eigen::LLT<Eigen::MatrixXd> LLT_of_hessian (hessian_matrix);
+        if (LLT_of_hessian.info() == Eigen::NumericalIssue)  // the Hessian is not positive definite
+        {
 
-    Eigen::VectorXd kappa_vector = numopt::newtonStep(Eigen::VectorXd::Zero(this->K), gradient_function, hessian_function);
+            // If the Hessian is not positive definite, we can try to modify it
+            // Try to add a multiple (tau) of the identity: tau = - lowest eigenvalue of the Hessian
+            // If we can't diagonalize, i.e. for large systems, we can use an algorithm to keep increasing tau until the Hessian is positive definite
+            Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> hessian_solver (hessian_matrix);
+            double lowest_eigenvalue = hessian_solver.eigenvalues()(0);
+            std::cout << "lowest eigenvalue: " << lowest_eigenvalue << std::endl;
 
+            hessian_matrix += -1.1 * lowest_eigenvalue * Eigen::MatrixXd::Identity(this->K*this->K, this->K*this->K);
 
-    // Change kappa back to a matrix
-    Eigen::Map<Eigen::MatrixXd> kappa_matrix (kappa_vector.data(), this->K, this->K);
-
-
-    // Calculate the unitary rotation matrix
-    Eigen::MatrixXd U = kappa_matrix.exp();
-
-
-    // Transform the integrals to the new orthonormal basis
-    // TODO: when the review is accepted, use this function
-    // this->so_basis.rotate(U);
-    assert(U.isUnitary(1.0e-12));
-    this->so_basis.transform(U);
-
+            Eigen::LLT<Eigen::MatrixXd> LLT_of_modified_hessian (hessian_matrix);
+            if (LLT_of_modified_hessian.info() == Eigen::NumericalIssue) {
+                throw std::runtime_error("The modified Hessian still isn't invertible.");
+            }
+        }
 
 
+        // Perform a Newton-step to find orbital rotation parameters kappa
+        numopt::GradientFunction gradient_function = [gradient_vector](const Eigen::VectorXd& x) { return gradient_vector; };
+        numopt::JacobianFunction hessian_function = [hessian_matrix](const Eigen::VectorXd& x) { return hessian_matrix; };
+
+
+        //        Eigen::VectorXd kappa_vector = numopt::newtonStep(Eigen::VectorXd::Zero(this->K), gradient_function, hessian_function);
+        Eigen::VectorXd kappa_vector = - hessian_matrix.inverse() * gradient_vector;
+        // Change kappa back to a matrix
+        Eigen::Map<Eigen::MatrixXd> kappa_matrix (kappa_vector.data(), this->K, this->K);
+
+
+        if (!(hessian_matrix * kappa_vector + gradient_vector).isZero()) {  // the Hessian was singular, so use gradient descent
+            std::cout << "Hessian wasn't invertible... Had to do gradient descent ..." << std::endl;
+            kappa_matrix = -gradient_matrix;
+        }
+
+//        assert((kappa_vector_newton + hessian_matrix.inverse() * gradient_vector).isZero());
+
+
+//        std::cout << "Kappa vector: " << std::endl << kappa_vector << std::endl << std::endl;
+
+
+        // What if the Hessian is singular? Do a gradient descent  // TODO put this step into numopt
+//        Eigen::MatrixXd kappa_matrix_descent = -gradient_matrix;
+
+
+        if (kappa_matrix.norm() < convergence_threshold) {
+            is_converged = true;
+        } else {
+            orbital_optimization_iterations++;
+
+            // TODO: should I do something else?
+            // The current solution can now be accessed using the normal getters
+
+            if (orbital_optimization_iterations >= number_of_maximum_orbital_optimization_iterations ) {
+                throw std::runtime_error("The OO-DOCI procedure failed to converge in the maximum number of allowed iterations.");
+            }
+        }
+
+
+        std::cout << "Kappa matrix: " << std::endl << kappa_matrix << std::endl << std::endl;
+        // Calculate the unitary rotation matrix
+        Eigen::MatrixXd U = (kappa_matrix).exp();
+        std::cout << "Unitary transformation matrix: " << std::endl << U << std::endl << std::endl;
+
+
+        // Transform the integrals to the new orthonormal basis
+        this->so_basis.rotate(U);
+
+
+        //
+        Eigen::VectorXd v = this->get_lowest_eigenvector();
+//        std::cout << "Eigenvector of the old Hamiltonian: v: " << std::endl << v << std::endl << std::endl;
+        Eigen::VectorXd Hv = this->matrixVectorProduct(v);
+//        std::cout << "New Hamiltonian action on the old eigenvector: Hv: " << std::endl << Hv << std::endl << std::endl;
+
+        std::cout << "Energy of the old eigenvector in the new Hamiltonian: " << std::endl << v.dot(Hv) << std::endl << std::endl;
+
+
+        // Solve the DOCI eigenvalue problem in the new basis
+        davidson_solver_options.X_0 = v;
+//        this->solve(davidson_solver_options_ptr);
+        this->solve(&dense_solver_options);
+    }  // while not converged
 }
 
 

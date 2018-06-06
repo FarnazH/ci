@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE ( DOCI_h2_sto3g_dense_vs_Davidson ) {
     // Specify solver options and solve the eigenvalue problem
     numopt::eigenproblem::DenseSolverOptions dense_options;
     doci_dense.solve(&dense_options);
-    double doci_energy_dense = doci_dense.get_eigenvalue() + internuclear_repulsion_energy;
+    double doci_energy_dense = doci_dense.get_eigenvalue() + internuclear_repulsion_energy;  // -1.13726333836357
 
 
     // Calculate the DOCI energy using the Davidson algorithm
@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE ( DOCI_h2_631g_dense_vs_Davidson ) {
     // Specify solver options and solve the eigenvalue problem
     numopt::eigenproblem::DenseSolverOptions dense_options;
     doci_dense.solve(&dense_options);
-    double doci_energy_dense = doci_dense.get_eigenvalue() + internuclear_repulsion_energy;
+    double doci_energy_dense = doci_dense.get_eigenvalue() + internuclear_repulsion_energy;  // -1.14342062942745
 
 
     // Calculate the DOCI energy using the Davidson algorithm
