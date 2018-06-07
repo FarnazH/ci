@@ -330,6 +330,7 @@ void DOCI::calculate2RDMs(){
 void DOCI::orbitalOptimize(numopt::eigenproblem::DavidsonSolverOptions* davidson_solver_options_ptr) {
 
 
+    // Do a random rotation to check the gradient TODO: remove this after the OO-DOCI issue has been cleared up
     Eigen::MatrixXd A_random = Eigen::MatrixXd::Random(this->K, this->K);
     Eigen::MatrixXd A_symmetric = A_random + A_random.transpose();
     Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> unitary_solver (A_symmetric);
@@ -345,7 +346,7 @@ void DOCI::orbitalOptimize(numopt::eigenproblem::DavidsonSolverOptions* davidson
 
     size_t orbital_optimization_iterations = 0;
     size_t number_of_maximum_orbital_optimization_iterations = 128;
-    double convergence_threshold = 1.0e-08;
+    double convergence_threshold = 1.0e-08;  // on the norm of the gradient
 
 
     // Solve the DOCI eigenvalue equation, using the options provided
@@ -368,9 +369,9 @@ void DOCI::orbitalOptimize(numopt::eigenproblem::DavidsonSolverOptions* davidson
         // Calculate the electronic gradient at kappa=0
         Eigen::MatrixXd F = this->so_basis.calculateGeneralizedFockMatrix(this->one_rdm, this->two_rdm);
         Eigen::MatrixXd gradient_matrix = 2 * (F - F.transpose());
-        std::cout << "gradient matrix: " << std::setprecision(6) << std::endl << gradient_matrix << std::endl << std::endl;
-        Eigen::Map<Eigen::VectorXd> gradient_vector (gradient_matrix.data(), gradient_matrix.cols()*gradient_matrix.rows());  // at kappa = 0
-//        std::cout << "Gradient vector: " << std::endl << gradient_vector << std::endl << std::endl;
+//        std::cout << "gradient matrix: " << std::endl << std::setprecision(6) << gradient_matrix << std::endl << std::endl;
+        Eigen::VectorXd gradient_vector = cpputil::linalg::strictLowerTriangle(gradient_matrix);  // gradient vector with the free parameters, at kappa=0
+        std::cout << "'reduced' gradient vector: " << std::endl << gradient_vector << std::endl << std::endl;
 
         // Calculate the electronic Hessian at kappa=0
         Eigen::Tensor<double, 4> W = this->so_basis.calculateSuperGeneralizedFockMatrix(this->one_rdm, this->two_rdm);
@@ -386,16 +387,15 @@ void DOCI::orbitalOptimize(numopt::eigenproblem::DavidsonSolverOptions* davidson
                 }
             }
         }
-        Eigen::MatrixXd hessian_matrix = cpputil::linalg::toMatrix(hessian_tensor);  // at kappa = 0
-//        std::cout << "hessian row: " << std::endl << hessian_matrix.row(this->K) << std::endl;
-        std::cout << "hessian: " << std::endl << hessian_matrix << std::endl << std::endl;
+        Eigen::MatrixXd hessian_matrix = cpputil::linalg::strictLowerTriangle(hessian_tensor);  // hessian matrix with only the free parameters, at kappa = 0
+        std::cout << "'reduced' hessian_matrix: " << std::endl << hessian_matrix << std::endl << std::endl;
 
 
         assert(hessian_matrix.isApprox(hessian_matrix.transpose()));
 
         Eigen::array<int, 4> shuffle {1, 0, 2, 3};
         Eigen::Tensor<double, 4> hessian_tensor_qp = hessian_tensor.shuffle(shuffle);
-        Eigen::MatrixXd hessian_matrix_qp = cpputil::linalg::toMatrix(hessian_tensor_qp);
+        Eigen::MatrixXd hessian_matrix_qp = cpputil::linalg::strictLowerTriangle(hessian_tensor_qp);
 
         assert(hessian_matrix.isApprox(-hessian_matrix_qp));
 
@@ -433,15 +433,17 @@ void DOCI::orbitalOptimize(numopt::eigenproblem::DavidsonSolverOptions* davidson
 
 
         // Perform a Newton-step to find orbital rotation parameters kappa
-//        numopt::GradientFunction gradient_function = [gradient_vector](const Eigen::VectorXd& x) { return gradient_vector; };
-//        numopt::JacobianFunction hessian_function = [hessian_matrix](const Eigen::VectorXd& x) { return hessian_matrix; };
+        numopt::GradientFunction gradient_function = [gradient_vector](const Eigen::VectorXd& x) { return gradient_vector; };
+        numopt::JacobianFunction hessian_function = [hessian_matrix](const Eigen::VectorXd& x) { return hessian_matrix; };
 
-
-        //        Eigen::VectorXd kappa_vector = numopt::newtonStep(Eigen::VectorXd::Zero(this->K), gradient_function, hessian_function);
+        Eigen::VectorXd kappa_vector = numopt::newtonStep(Eigen::VectorXd::Zero(this->K), gradient_function, hessian_function);  // with only the free parameters
 //        Eigen::VectorXd kappa_vector = - hessian_matrix.inverse() * gradient_vector;
-//        // Change kappa back to a matrix
-//        Eigen::Map<Eigen::MatrixXd> kappa_matrix (kappa_vector.data(), this->K, this->K);
+        // Change kappa back to a matrix
+        Eigen::MatrixXd kappa_matrix = cpputil::linalg::fillStrictLowerTriangle(kappa_vector);  // containing all parameters, so this is in anti-Hermitian (anti-symmetric) form
+        Eigen::MatrixXd kappa_matrix_transpose = kappa_matrix.transpose();  // store the transpose in an auxiliary variable to avoid aliasing issues
+        kappa_matrix -= kappa_matrix_transpose;  // fillStrictLowerTriangle only returns the lower triangle, so we must construct the anti-Hermitian (anti-symmetric) matrix
 
+        std::cout << "kappa matrix: " << std::endl << kappa_matrix << std::endl << std::endl;
 
         // Did we produce a descent direction?
 //        std::cout << "Inner product of kappa_vector and gradient_vector: " << kappa_vector.dot(gradient_vector) << std::endl;
@@ -479,7 +481,7 @@ void DOCI::orbitalOptimize(numopt::eigenproblem::DavidsonSolverOptions* davidson
 //        }
 
 
-        Eigen::MatrixXd kappa_matrix = -gradient_matrix;
+//        Eigen::MatrixXd kappa_matrix = -gradient_matrix;
 
 
 
@@ -501,7 +503,7 @@ void DOCI::orbitalOptimize(numopt::eigenproblem::DavidsonSolverOptions* davidson
         std::cout << "Kappa matrix: " << std::setprecision(6) << std::endl << kappa_matrix << std::endl << std::endl;
         // Calculate the unitary rotation matrix
         Eigen::MatrixXd U = (-kappa_matrix).exp();
-//        std::cout << "Unitary transformation matrix: " << std::endl << U << std::endl << std::endl;
+        std::cout << "Unitary transformation matrix: " << std::endl << U << std::endl << std::endl;
 
 
         // Transform the integrals to the new orthonormal basis
@@ -523,7 +525,6 @@ void DOCI::orbitalOptimize(numopt::eigenproblem::DavidsonSolverOptions* davidson
         this->solve(&dense_solver_options);
 
 
-        std::cout << "diagonal sum: " << std::setprecision(15) << this->diagonal.sum() << std::endl;
     }  // while not converged
 }
 
