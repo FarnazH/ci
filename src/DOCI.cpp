@@ -331,11 +331,11 @@ void DOCI::orbitalOptimize(numopt::eigenproblem::DavidsonSolverOptions* davidson
 
 
     // Do a random rotation to check the gradient TODO: remove this after the OO-DOCI issue has been cleared up
-    Eigen::MatrixXd A_random = Eigen::MatrixXd::Random(this->K, this->K);
-    Eigen::MatrixXd A_symmetric = A_random + A_random.transpose();
-    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> unitary_solver (A_symmetric);
-    Eigen::MatrixXd U_random = unitary_solver.eigenvectors();
-    this->so_basis.rotate(U_random);
+//    Eigen::MatrixXd A_random = Eigen::MatrixXd::Random(this->K, this->K);
+//    Eigen::MatrixXd A_symmetric = A_random + A_random.transpose();
+//    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> unitary_solver (A_symmetric);
+//    Eigen::MatrixXd U_random = unitary_solver.eigenvectors();
+//    this->so_basis.rotate(U_random);
 
 
 
@@ -388,16 +388,16 @@ void DOCI::orbitalOptimize(numopt::eigenproblem::DavidsonSolverOptions* davidson
             }
         }
         Eigen::MatrixXd hessian_matrix = cpputil::linalg::strictLowerTriangle(hessian_tensor);  // hessian matrix with only the free parameters, at kappa = 0
-        std::cout << "'reduced' hessian_matrix: " << std::endl << hessian_matrix << std::endl << std::endl;
+//        std::cout << "'reduced' hessian_matrix: " << std::endl << hessian_matrix << std::endl << std::endl;
 
 
-        assert(hessian_matrix.isApprox(hessian_matrix.transpose()));
+//        assert(hessian_matrix.isApprox(hessian_matrix.transpose()));
 
-        Eigen::array<int, 4> shuffle {1, 0, 2, 3};
-        Eigen::Tensor<double, 4> hessian_tensor_qp = hessian_tensor.shuffle(shuffle);
-        Eigen::MatrixXd hessian_matrix_qp = cpputil::linalg::strictLowerTriangle(hessian_tensor_qp);
-
-        assert(hessian_matrix.isApprox(-hessian_matrix_qp));
+//        Eigen::array<int, 4> shuffle {1, 0, 2, 3};
+//        Eigen::Tensor<double, 4> hessian_tensor_qp = hessian_tensor.shuffle(shuffle);
+//        Eigen::MatrixXd hessian_matrix_qp = cpputil::linalg::strictLowerTriangle(hessian_tensor_qp);
+//
+//        assert(hessian_matrix.isApprox(-hessian_matrix_qp));
 
 
 //        std::cout << hessian_matrix.inverse() << std::endl;
@@ -500,7 +500,6 @@ void DOCI::orbitalOptimize(numopt::eigenproblem::DavidsonSolverOptions* davidson
         }
 
 
-        std::cout << "Kappa matrix: " << std::setprecision(6) << std::endl << kappa_matrix << std::endl << std::endl;
         // Calculate the unitary rotation matrix
         Eigen::MatrixXd U = (-kappa_matrix).exp();
         std::cout << "Unitary transformation matrix: " << std::endl << U << std::endl << std::endl;
