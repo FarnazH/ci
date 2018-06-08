@@ -22,25 +22,42 @@ set(EXPORT_TYPE ARCHIVE)
 set(PROJECT_SOURCE_FOLDER ${CMAKE_SOURCE_DIR}/src)
 
 # Find the source files
-file(GLOB PROJECT_SOURCE_FILES ${PROJECT_SOURCE_FOLDER}/*.cpp)
+set(PROJECT_SOURCE_FILES
+        ${PROJECT_SOURCE_FOLDER}/BaseCI.cpp
+        ${PROJECT_SOURCE_FOLDER}/DOCI.cpp
+        ${PROJECT_SOURCE_FOLDER}/FCI.cpp)
 
 # Find the header folder
 set(PROJECT_INCLUDE_FOLDER ${CMAKE_SOURCE_DIR}/include)
 
 # Find the header files (not including version.hpp.in)
-file(GLOB PROJECT_INCLUDE_FILES ${PROJECT_INCLUDE_FOLDER}/*.hpp ${PROJECT_INCLUDE_FOLDER}/*.h)
+set(PROJECT_INCLUDE_FILES
+        ${PROJECT_INCLUDE_FOLDER}/BaseCI.hpp
+        ${PROJECT_INCLUDE_FOLDER}/ci.hpp
+        ${PROJECT_INCLUDE_FOLDER}/DOCI.hpp
+        ${PROJECT_INCLUDE_FOLDER}/FCI.hpp
+        ${PROJECT_INCLUDE_FOLDER}/version.hpp)
 
 # Find the tests folder
 set(PROJECT_TESTS_FOLDER ${CMAKE_SOURCE_DIR}/tests)
 
 # Find the source files for the tests
-file(GLOB PROJECT_TEST_SOURCE_FILES ${PROJECT_TESTS_FOLDER}/*.cpp)
+set(PROJECT_TEST_SOURCE_FILES
+        ${PROJECT_TESTS_FOLDER}/DOCI_Davidson_test.cpp
+        ${PROJECT_TESTS_FOLDER}/DOCI_dense_test.cpp
+        ${PROJECT_TESTS_FOLDER}/DOCI_RDM_test.cpp
+        ${PROJECT_TESTS_FOLDER}/DOCI_sparse_test.cpp
+        ${PROJECT_TESTS_FOLDER}/DOCI_test.cpp
+        ${PROJECT_TESTS_FOLDER}/FCI_dense_test.cpp
+        ${PROJECT_TESTS_FOLDER}/FCI_sparse_test.cpp
+        ${PROJECT_TESTS_FOLDER}/FCI_test.cpp)
 
 # Find the executable folder
 set(PROJECT_EXECUTABLES_FOLDER ${CMAKE_SOURCE_DIR}/exe)
 
 # Find the source files for the executables
-file(GLOB PROJECT_EXECUTABLE_SOURCE_FILES ${PROJECT_EXECUTABLES_FOLDER}/*.cpp)
+set(PROJECT_EXECUTABLE_SOURCE_FILES
+        ${PROJECT_EXECUTABLES_FOLDER}/main.cpp)
 
 
 # Give the user the option to specify an installation prefix. If not given as -DINSTALLATION_PREFIX, defaults to /usr/local.
