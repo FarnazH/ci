@@ -365,31 +365,39 @@ size_t FCI::calculateDimension(size_t K, size_t N_alpha, size_t N_beta) {
  *  Calculate all the 1-RDMs.
  */
 void FCI::calculate1RDMs() {
-    //initialize as zero matrix.
-    this->one_rdm_aa = Eigen::MatrixXd::Zero(this->K,this->K);
-    this->one_rdm_bb = Eigen::MatrixXd::Zero(this->K,this->K);
 
-    // Alpha-branch
+    // Initialize as zero matrices
+    this->one_rdm_aa = Eigen::MatrixXd::Zero(this->K, this->K);
+    this->one_rdm_bb = Eigen::MatrixXd::Zero(this->K, this->K);
+
+
+    // ALPHA
     bmqc::SpinString<boost::dynamic_bitset<>> spin_string_alpha (0, this->addressing_scheme_alpha);  // spin string with address 0
-    for (size_t I = 0; I < this->dim_alpha; I++) {  // I loops over all the addresses of the spin strings
-        if (I > 0) {
+    for (size_t I_alpha = 0; I_alpha < this->dim_alpha; I_alpha++) {  // I_alpha loops over all the addresses of the alpha spin strings
+        if (I_alpha > 0) {
             spin_string_alpha.nextPermutation();
-        }for (size_t p = 0; p < this->K; p++) {  // p loops over SOs
+        }
+
+        for (size_t p = 0; p < this->K; p++) {  // p loops over SOs
             int sign_p = 1;
-            if(spin_string_alpha.annihilate(p,sign_p)){
+            if (spin_string_alpha.annihilate(p, sign_p)) {  // if p is in I_alpha
                 double coefficient =  0;
-                for(size_t i = 0;i<dim_beta;i++){  //repeat for each beta possibility
-                    coefficient += this->eigensolver_ptr->get_eigenvector()(I*dim_beta+i)*this->eigensolver_ptr->get_eigenvector()(I*dim_beta+i);
+
+                // Diagonal contributions for the 1-DM, i.e. D_pp
+                for (size_t I_beta = 0; I_beta < this->dim_beta; I_beta++){  //repeat for each beta possibility
+                    coefficient += std::pow(this->eigensolver_ptr->get_eigenvector(I_alpha*this->dim_beta + I_beta), 2);
                 }  // dim_beta loop
                 this->one_rdm_aa(p,p) += coefficient;
-                for(size_t q = 0; q < p;q++){
+
+                // Off-diagonal contributions for the 1-DM, i.e. D_pq (p!=q)
+                for(size_t q = 0; q < p; q++){
                     int sign_q = sign_p;
                     if(spin_string_alpha.create(q,sign_q)){
                         size_t J = spin_string_alpha.address(this->addressing_scheme_alpha);
 
                         double coefficient = 0;
                         for(size_t i = 0;i<dim_beta;i++){
-                            coefficient += this->eigensolver_ptr->get_eigenvector()(I*dim_beta+i)
+                            coefficient += this->eigensolver_ptr->get_eigenvector()(I_alpha*dim_beta+i)
                                            *this->eigensolver_ptr->get_eigenvector()(J*dim_beta+i);
                         }  // dim_beta loop
                         one_rdm_aa(q,p) += sign_q*coefficient;
@@ -404,10 +412,11 @@ void FCI::calculate1RDMs() {
         }  // p
     }  // I
 
-    // Beta -Branch
+
+    // BETA
     bmqc::SpinString<boost::dynamic_bitset<>> spin_string_beta (0, this->addressing_scheme_beta);  // spin string with address 0
-    for (size_t I = 0; I < this->dim_beta; I++) {  // I loops over all the addresses of the spin strings
-        if (I > 0) {
+    for (size_t I_beta = 0; I_beta < this->dim_beta; I_beta++) {  // I_beta loops over all the addresses of the spin strings
+        if (I_beta > 0) {
             spin_string_beta.nextPermutation();
         }for (size_t p = 0; p < this->K; p++) {  // p loops over SOs
             int sign_p = 1;
@@ -415,7 +424,7 @@ void FCI::calculate1RDMs() {
 
                 double coefficient =  0;
                 for(size_t i = 0;i<dim_alpha;i++){  //repeat for each alpha possibility
-                    coefficient += this->eigensolver_ptr->get_eigenvector()(i*dim_beta+I)*this->eigensolver_ptr->get_eigenvector()(i*dim_beta+I);
+                    coefficient += this->eigensolver_ptr->get_eigenvector()(i*dim_beta+I_beta)*this->eigensolver_ptr->get_eigenvector()(i*dim_beta+I_beta);
                 }  // dim_alpha loop
                 this->one_rdm_bb(p,p) += coefficient;
                 for(size_t q = 0; q < p;q++){
@@ -425,7 +434,7 @@ void FCI::calculate1RDMs() {
 
                         double coefficient = 0;
                         for(size_t i = 0;i<dim_alpha;i++){
-                            coefficient += this->eigensolver_ptr->get_eigenvector()(i*dim_beta+I)
+                            coefficient += this->eigensolver_ptr->get_eigenvector()(i*dim_beta+I_beta)
                                            *this->eigensolver_ptr->get_eigenvector()(i*dim_beta+J);
                         }
                         one_rdm_bb(q,p) += sign_q*coefficient;
