@@ -381,36 +381,39 @@ void FCI::calculate1RDMs() {
         for (size_t p = 0; p < this->K; p++) {  // p loops over SOs
             int sign_p = 1;
             if (spin_string_alpha.annihilate(p, sign_p)) {  // if p is in I_alpha
-                double coefficient =  0;
+                double diagonal_contribution =  0;
 
                 // Diagonal contributions for the 1-DM, i.e. D_pp
-                for (size_t I_beta = 0; I_beta < this->dim_beta; I_beta++){  //repeat for each beta possibility
-                    coefficient += std::pow(this->eigensolver_ptr->get_eigenvector(I_alpha*this->dim_beta + I_beta), 2);
-                }  // dim_beta loop
-                this->one_rdm_aa(p,p) += coefficient;
+                // We are storing the alpha addresses as 'major', i.e. the total address I_alpha I_beta = I_alpha * dim_beta + I_beta
+                for (size_t I_beta = 0; I_beta < this->dim_beta; I_beta++) {
+                    double c_I_alpha_I_beta = this->eigensolver_ptr->get_eigenvector(I_alpha*this->dim_beta + I_beta);
+                    diagonal_contribution += std::pow(c_I_alpha_I_beta, 2);
+                }
+                this->one_rdm_aa(p,p) += diagonal_contribution;
 
                 // Off-diagonal contributions for the 1-DM, i.e. D_pq (p!=q)
-                for(size_t q = 0; q < p; q++){
-                    int sign_q = sign_p;
-                    if(spin_string_alpha.create(q,sign_q)){
-                        size_t J = spin_string_alpha.address(this->addressing_scheme_alpha);
+                for (size_t q = 0; q < p; q++) {  // q < p loops over SOs
+                    int sign_pq = sign_p;
+                    if (spin_string_alpha.create(q, sign_pq)) {  // if q is not occupied in I_alpha
+                        size_t J_alpha = spin_string_alpha.address(this->addressing_scheme_alpha);  // find all strings J_alpha that couple to I_alpha
 
-                        double coefficient = 0;
-                        for(size_t i = 0;i<dim_beta;i++){
-                            coefficient += this->eigensolver_ptr->get_eigenvector()(I_alpha*dim_beta+i)
-                                           *this->eigensolver_ptr->get_eigenvector()(J*dim_beta+i);
-                        }  // dim_beta loop
-                        one_rdm_aa(q,p) += sign_q*coefficient;
-                        one_rdm_aa(p,q) += sign_q*coefficient;
+                        double off_diagonal_contribution = 0;
+                        for(size_t I_beta = 0; I_beta < this->dim_beta; I_beta++) {
+                            double c_I_alpha_I_beta = this->eigensolver_ptr->get_eigenvector(I_alpha*this->dim_beta + I_beta);  // alpha addresses are 'major'
+                            double c_J_alpha_I_beta = this->eigensolver_ptr->get_eigenvector(J_alpha*this->dim_beta + I_beta);
+                            off_diagonal_contribution += c_I_alpha_I_beta * c_J_alpha_I_beta;
+                        }
+                        this->one_rdm_aa(p,q) += sign_pq * off_diagonal_contribution;
+                        this->one_rdm_aa(q,p) += sign_pq * off_diagonal_contribution;  // add the symmetric contribution because we are looping over q < p
 
-                        spin_string_alpha.annihilate(q);
+                        spin_string_alpha.annihilate(q);  // undo the previous creation
+                    }  // create on q
+                }  // q loop
 
-                    }  // create q
-                }  // q
-                spin_string_alpha.create(p);
-            }  // anni p
-        }  // p
-    }  // I
+                spin_string_alpha.create(p);  // undo the previous annihilation
+            }  // annihilate on p
+        }  // p loop
+    }  // I_alpha loop
 
 
     // BETA
@@ -418,37 +421,45 @@ void FCI::calculate1RDMs() {
     for (size_t I_beta = 0; I_beta < this->dim_beta; I_beta++) {  // I_beta loops over all the addresses of the spin strings
         if (I_beta > 0) {
             spin_string_beta.nextPermutation();
-        }for (size_t p = 0; p < this->K; p++) {  // p loops over SOs
+        }
+
+        for (size_t p = 0; p < this->K; p++) {  // p loops over SOs
             int sign_p = 1;
-            if(spin_string_beta.annihilate(p,sign_p)){
+            if (spin_string_beta.annihilate(p, sign_p)) {  // if p is in I_beta
+                double diagonal_contribution = 0;
 
-                double coefficient =  0;
-                for(size_t i = 0;i<dim_alpha;i++){  //repeat for each alpha possibility
-                    coefficient += this->eigensolver_ptr->get_eigenvector()(i*dim_beta+I_beta)*this->eigensolver_ptr->get_eigenvector()(i*dim_beta+I_beta);
-                }  // dim_alpha loop
-                this->one_rdm_bb(p,p) += coefficient;
-                for(size_t q = 0; q < p;q++){
-                    int sign_q = sign_p;
-                    if(spin_string_beta.create(q,sign_q)){
-                        size_t J = spin_string_beta.address(this->addressing_scheme_beta);
+                // Diagonal contributions for the 1-DM, i.e. D_pp
+                // We are storing the alpha addresses as 'major', i.e. the total address I_alpha I_beta = I_alpha * dim_beta + I_beta
+                for (size_t I_alpha = 0; I_alpha < this->dim_alpha; I_alpha++) {
+                    double c_I_alpha_I_beta = this->eigensolver_ptr->get_eigenvector(I_alpha*dim_beta + I_beta);
+                    diagonal_contribution += std::pow(c_I_alpha_I_beta, 2);
+                }
 
-                        double coefficient = 0;
-                        for(size_t i = 0;i<dim_alpha;i++){
-                            coefficient += this->eigensolver_ptr->get_eigenvector()(i*dim_beta+I_beta)
-                                           *this->eigensolver_ptr->get_eigenvector()(i*dim_beta+J);
+                this->one_rdm_bb(p,p) += diagonal_contribution;
+
+                // Off-diagonal contributions for the 1-DM
+                for (size_t q = 0; q < p; q++) {  // q < p loops over SOs
+                    int sign_pq = sign_p;
+                    if (spin_string_beta.create(q, sign_pq)) {  // if q is not in I_beta
+                        size_t J_beta = spin_string_beta.address(this->addressing_scheme_beta);  // find all strings J_beta that couple to I_beta
+
+                        double off_diagonal_contribution = 0;
+                        for (size_t I_alpha = 0; I_alpha<dim_alpha; I_alpha++) {
+                            double c_I_alpha_I_beta = this->eigensolver_ptr->get_eigenvector(I_alpha*dim_beta + I_beta);  // alpha addresses are 'major'
+                            double c_I_alpha_J_beta = this->eigensolver_ptr->get_eigenvector(I_alpha*dim_beta + J_beta);
+                            off_diagonal_contribution += c_I_alpha_I_beta * c_I_alpha_J_beta;
                         }
-                        one_rdm_bb(q,p) += sign_q*coefficient;
-                        one_rdm_bb(p,q) += sign_q*coefficient;
-                        spin_string_beta.annihilate(q);
+                        this->one_rdm_bb(p,q) += sign_pq * off_diagonal_contribution;
+                        this->one_rdm_bb(q,p) += sign_pq * off_diagonal_contribution;  // add the symmetric contribution because we are looping over q < p
 
-                    }  // create q
+                        spin_string_beta.annihilate(q);  // undo the previous creation
+                    }  // create on q
+                }  // loop over q
 
-
-                }  // q
-                spin_string_beta.create(p);
-            }  // anni p
-        }  // p
-    }  // I
+                spin_string_beta.create(p);  // undo the previous annihilation
+            }  // annihilate on p
+        }  // loop over p
+    }  // I_beta loop
 
     this->one_rdm = this->one_rdm_aa + this->one_rdm_bb;
     this->are_computed_one_rdms = true;

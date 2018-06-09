@@ -8,36 +8,6 @@
 
 
 
-// dim = 49
-BOOST_AUTO_TEST_CASE ( FCI_H2O_Psi4_GAMESS_dense ) {
-
-    // Psi4 and GAMESS' FCI energy
-    double reference_fci_energy = -75.0129803939602;
-
-
-    // Prepare the AO basis
-    libwint::Molecule water ("../tests/reference_data/h2o_Psi4_GAMESS.xyz");
-    libwint::AOBasis ao_basis (water, "STO-3G");
-    ao_basis.calculateIntegrals();
-
-    // Prepare the SO basis from RHF coefficients
-    hf::rhf::RHF rhf (water, ao_basis, 1.0e-06);
-    rhf.solve();
-    libwint::SOBasis so_basis (ao_basis, rhf.get_C_canonical());
-
-
-    // Do a dense FCI calculation based on a given SO basis
-    ci::FCI fci (so_basis, 5, 5);  // N_alpha = 5, N_beta = 5
-    fci.solve(numopt::eigenproblem::SolverType::DENSE);
-
-
-    // Calculate the total energy
-    double internuclear_repulsion_energy = water.calculateInternuclearRepulsionEnergy();
-    double test_fci_energy = fci.get_eigenvalue() + internuclear_repulsion_energy;
-    BOOST_CHECK(std::abs(test_fci_energy - (reference_fci_energy)) < 1.0e-06);
-}
-
-
 // dim = 100
 BOOST_AUTO_TEST_CASE ( FCI_H2_Cristina_dense ) {
 
@@ -65,6 +35,36 @@ BOOST_AUTO_TEST_CASE ( FCI_H2_Cristina_dense ) {
     double internuclear_repulsion_energy = h2.calculateInternuclearRepulsionEnergy();
     double test_fci_energy = fci.get_eigenvalue() + internuclear_repulsion_energy;
 
+    BOOST_CHECK(std::abs(test_fci_energy - (reference_fci_energy)) < 1.0e-06);
+}
+
+
+// dim = 441
+BOOST_AUTO_TEST_CASE ( FCI_H2O_Psi4_GAMESS_dense ) {
+
+    // Psi4 and GAMESS' FCI energy
+    double reference_fci_energy = -75.0129803939602;
+
+
+    // Prepare the AO basis
+    libwint::Molecule water ("../tests/reference_data/h2o_Psi4_GAMESS.xyz");
+    libwint::AOBasis ao_basis (water, "STO-3G");
+    ao_basis.calculateIntegrals();
+
+    // Prepare the SO basis from RHF coefficients
+    hf::rhf::RHF rhf (water, ao_basis, 1.0e-06);
+    rhf.solve();
+    libwint::SOBasis so_basis (ao_basis, rhf.get_C_canonical());
+
+
+    // Do a dense FCI calculation based on a given SO basis
+    ci::FCI fci (so_basis, 5, 5);  // N_alpha = 5, N_beta = 5
+    fci.solve(numopt::eigenproblem::SolverType::DENSE);
+
+
+    // Calculate the total energy
+    double internuclear_repulsion_energy = water.calculateInternuclearRepulsionEnergy();
+    double test_fci_energy = fci.get_eigenvalue() + internuclear_repulsion_energy;
     BOOST_CHECK(std::abs(test_fci_energy - (reference_fci_energy)) < 1.0e-06);
 }
 
