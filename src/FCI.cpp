@@ -403,8 +403,8 @@ void FCI::calculate1RDMs() {
                             double c_J_alpha_I_beta = this->eigensolver_ptr->get_eigenvector(J_alpha*this->dim_beta + I_beta);
                             off_diagonal_contribution += c_I_alpha_I_beta * c_J_alpha_I_beta;
                         }
-                        this->one_rdm_aa(q,p) += sign_pq * off_diagonal_contribution;
-                        this->one_rdm_aa(p,q) += sign_pq * off_diagonal_contribution;  // add the symmetric contribution because we are looping over q < p
+                        this->one_rdm_aa(p,q) += sign_pq * off_diagonal_contribution;
+                        this->one_rdm_aa(q,p) += sign_pq * off_diagonal_contribution;  // add the symmetric contribution because we are looping over q < p
 
                         spin_string_alpha.annihilate(q);  // undo the previous creation
                     }  // create on q
@@ -449,8 +449,8 @@ void FCI::calculate1RDMs() {
                             double c_I_alpha_J_beta = this->eigensolver_ptr->get_eigenvector(I_alpha*dim_beta + J_beta);
                             off_diagonal_contribution += c_I_alpha_I_beta * c_I_alpha_J_beta;
                         }
-                        this->one_rdm_bb(q,p) += sign_pq * off_diagonal_contribution;
-                        this->one_rdm_bb(p,q) += sign_pq * off_diagonal_contribution;  // add the symmetric contribution because we are looping over q < p
+                        this->one_rdm_bb(p,q) += sign_pq * off_diagonal_contribution;
+                        this->one_rdm_bb(q,p) += sign_pq * off_diagonal_contribution;  // add the symmetric contribution because we are looping over q < p
 
                         spin_string_beta.annihilate(q);  // undo the previous creation
                     }  // create on q
