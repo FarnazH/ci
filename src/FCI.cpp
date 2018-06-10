@@ -469,8 +469,83 @@ void FCI::calculate1RDMs() {
  *  Calculate all the 2-RDMs.
  */
 void FCI::calculate2RDMs() {
-    throw std::logic_error("This function hasn't been implemented yet.");
 
+    // KISS implementation of the 2-DMs (no symmetry)
+    this->two_rdm_aaaa = Eigen::Tensor<double, 4>(this->K,this->K,this->K,this->K);
+    this->two_rdm_aaaa.setZero();
+    this->two_rdm_aabb = Eigen::Tensor<double, 4>(this->K,this->K,this->K,this->K);
+    this->two_rdm_aabb.setZero();
+    this->two_rdm_bbaa = Eigen::Tensor<double, 4>(this->K,this->K,this->K,this->K);
+    this->two_rdm_bbaa.setZero();
+    this->two_rdm_bbbb = Eigen::Tensor<double, 4>(this->K,this->K,this->K,this->K);
+    this->two_rdm_bbbb.setZero();
+
+    std::cout << "We've initialized the 2-RDMs." << std::endl;
+
+
+    // ALPHA-ALPHA-ALPHA-ALPHA
+    bmqc::SpinString<boost::dynamic_bitset<>> spin_string_alpha (0, this->addressing_scheme_alpha);  // spin string with address 0
+    std::cout << "Ready to start the loop." << std::endl;
+    for (size_t I_alpha = 0; I_alpha < this->dim_alpha; I_alpha++) {  // I_alpha loops over all the addresses of the alpha spin strings
+        if (I_alpha > 0) {
+            spin_string_alpha.nextPermutation();
+        }
+
+        for (size_t p = 0; p < this->K; p++) {  // p loops over SOs
+            int sign_p = 1;  // sign of the operator a_p
+
+            if (spin_string_alpha.annihilate(p, sign_p)) {  // if p is not in I_alpha
+
+                for (size_t r = 0; r < this->K; r++) {  // r loops over SOs
+                    int sign_pr = sign_p;  // sign of the operator a_r a_p
+
+                    if (spin_string_alpha.annihilate(r, sign_pr)) {  // if r is not in I_alpha
+
+                        for (size_t s = 0; s < this->K; s++) {  // s loops over SOs
+                            int sign_prs = sign_pr;  // sign of the operator a^dagger_s a_r a_p
+
+                            if (spin_string_alpha.create(s, sign_prs)) {  // if s is in I_alpha
+
+                                for (size_t q = 0; q < this->K; q++) {  // q loops over SOs
+                                    int sign_prsq = sign_prs;  // sign of the operator a^dagger_q a^dagger_s a_r a_p
+
+                                    if (spin_string_alpha.create(q, sign_prsq)) {  // if q is not in I_alpha
+                                        size_t J_alpha = spin_string_alpha.address(this->addressing_scheme_alpha);  // address of the coupling string
+
+                                        double contribution = 0.0;
+                                        for (size_t I_beta = 0; I_beta < this->dim_beta; I_beta++) {
+                                            double c_I_alpha_I_beta = this->eigensolver_ptr->get_eigenvector(I_alpha*this->dim_beta + I_beta);  // alpha addresses are 'major'
+                                            double c_J_alpha_I_beta = this->eigensolver_ptr->get_eigenvector(J_alpha*this->dim_beta + I_beta);
+                                            contribution += c_I_alpha_I_beta * c_J_alpha_I_beta;
+                                        }
+
+
+                                        this->two_rdm_aaaa(p,q,r,s) += sign_prsq * contribution;
+
+                                        spin_string_alpha.annihilate(q);  // undo the previous creation
+                                    }
+                                }  // loop over q
+
+                                spin_string_alpha.annihilate(s);  // undo the previous creation
+                            }
+                        }  // loop over s
+
+                        spin_string_alpha.create(r);  // undo the previous annihilation
+                    }
+                }  // loop over r
+
+                spin_string_alpha.create(p);  // undo the previous annihilation
+            }
+        }  // loop over p
+    }  // loop over I_alpha
+
+    std::cout << "We're done for aaaa." << std::endl;
+
+
+
+
+
+    this->are_computed_two_rdms = true;
 }
 
 
