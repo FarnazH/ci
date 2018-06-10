@@ -470,7 +470,7 @@ void FCI::calculate1RDMs() {
  */
 void FCI::calculate2RDMs() {
 
-    // KISS implementation of the 2-DMs (no symmetry)
+    // KISS implementation of the 2-DMs (no symmetry relations are used yet)
     this->two_rdm_aaaa = Eigen::Tensor<double, 4>(this->K,this->K,this->K,this->K);
     this->two_rdm_aaaa.setZero();
     this->two_rdm_aabb = Eigen::Tensor<double, 4>(this->K,this->K,this->K,this->K);
@@ -480,36 +480,34 @@ void FCI::calculate2RDMs() {
     this->two_rdm_bbbb = Eigen::Tensor<double, 4>(this->K,this->K,this->K,this->K);
     this->two_rdm_bbbb.setZero();
 
-    std::cout << "We've initialized the 2-RDMs." << std::endl;
-
 
     // ALPHA-ALPHA-ALPHA-ALPHA
-    bmqc::SpinString<boost::dynamic_bitset<>> spin_string_alpha (0, this->addressing_scheme_alpha);  // spin string with address 0
+    bmqc::SpinString<boost::dynamic_bitset<>> spin_string_alpha_aaaa (0, this->addressing_scheme_alpha);  // spin string with address 0
     for (size_t I_alpha = 0; I_alpha < this->dim_alpha; I_alpha++) {  // I_alpha loops over all the addresses of the alpha spin strings
         if (I_alpha > 0) {
-            spin_string_alpha.nextPermutation();
+            spin_string_alpha_aaaa.nextPermutation();
         }
 
         for (size_t p = 0; p < this->K; p++) {  // p loops over SOs
             int sign_p = 1;  // sign of the operator a_p
 
-            if (spin_string_alpha.annihilate(p, sign_p)) {  // if p is not in I_alpha
+            if (spin_string_alpha_aaaa.annihilate(p, sign_p)) {  // if p is not in I_alpha
 
                 for (size_t r = 0; r < this->K; r++) {  // r loops over SOs
                     int sign_pr = sign_p;  // sign of the operator a_r a_p
 
-                    if (spin_string_alpha.annihilate(r, sign_pr)) {  // if r is not in I_alpha
+                    if (spin_string_alpha_aaaa.annihilate(r, sign_pr)) {  // if r is not in I_alpha
 
                         for (size_t s = 0; s < this->K; s++) {  // s loops over SOs
                             int sign_prs = sign_pr;  // sign of the operator a^dagger_s a_r a_p
 
-                            if (spin_string_alpha.create(s, sign_prs)) {  // if s is in I_alpha
+                            if (spin_string_alpha_aaaa.create(s, sign_prs)) {  // if s is in I_alpha
 
                                 for (size_t q = 0; q < this->K; q++) {  // q loops over SOs
                                     int sign_prsq = sign_prs;  // sign of the operator a^dagger_q a^dagger_s a_r a_p
 
-                                    if (spin_string_alpha.create(q, sign_prsq)) {  // if q is not in I_alpha
-                                        size_t J_alpha = spin_string_alpha.address(this->addressing_scheme_alpha);  // address of the coupling string
+                                    if (spin_string_alpha_aaaa.create(q, sign_prsq)) {  // if q is not in I_alpha
+                                        size_t J_alpha = spin_string_alpha_aaaa.address(this->addressing_scheme_alpha);  // address of the coupling string
 
                                         double contribution = 0.0;
                                         for (size_t I_beta = 0; I_beta < this->dim_beta; I_beta++) {
@@ -521,53 +519,119 @@ void FCI::calculate2RDMs() {
 
                                         this->two_rdm_aaaa(p,q,r,s) += sign_prsq * contribution;
 
-                                        spin_string_alpha.annihilate(q);  // undo the previous creation
+                                        spin_string_alpha_aaaa.annihilate(q);  // undo the previous creation
                                     }
                                 }  // loop over q
 
-                                spin_string_alpha.annihilate(s);  // undo the previous creation
+                                spin_string_alpha_aaaa.annihilate(s);  // undo the previous creation
                             }
                         }  // loop over s
 
-                        spin_string_alpha.create(r);  // undo the previous annihilation
+                        spin_string_alpha_aaaa.create(r);  // undo the previous annihilation
                     }
                 }  // loop over r
 
-                spin_string_alpha.create(p);  // undo the previous annihilation
+                spin_string_alpha_aaaa.create(p);  // undo the previous annihilation
             }
         }  // loop over p
     }  // loop over I_alpha
 
-    std::cout << "We're done for aaaa." << std::endl;
+
+    // ALPHA-ALPHA-BETA-BETA
+    bmqc::SpinString<boost::dynamic_bitset<>> spin_string_alpha_aabb (0, this->addressing_scheme_alpha);  // spin string with address 0
+    for (size_t I_alpha = 0; I_alpha < this->dim_alpha; I_alpha++) {  // I_alpha loops over all the addresses of the alpha spin strings
+        if (I_alpha > 0) {
+            spin_string_alpha_aabb.nextPermutation();
+        }
+
+        for (size_t p = 0; p < this->K; p++) {  // p loops over SOs
+            int sign_p = 1;  // sign of the operator a_p_alpha
+
+            if (spin_string_alpha_aabb.annihilate(p, sign_p)) {  // if p is in I_alpha
+
+                for (size_t q = 0; q < this->K; q++) {  // q loops over SOs
+                    int sign_pq = sign_p;  // sign of the operator a^dagger_p_alpha a_p_alpha
+
+                    if (spin_string_alpha_aabb.create(q, sign_pq)) {  // if q is not in I_alpha
+                        size_t J_alpha = spin_string_alpha_aabb.address(this->addressing_scheme_alpha);  // the string that couples to I_alpha
+
+
+                        bmqc::SpinString<boost::dynamic_bitset<>> spin_string_beta_aabb (0, this->addressing_scheme_beta);  // spin string with address 0
+                        for (size_t I_beta = 0; I_beta < this->dim_beta; I_beta++) {  // I_beta loops over all addresses of beta spin strings
+                            if (I_beta > 0) {
+                                spin_string_beta_aabb.nextPermutation();
+                            }
+
+                            for (size_t r = 0; r < this->K; r++) {  // r loops over all SOs
+                                int sign_r = 1;  // sign of the operator a_r_beta
+
+                                if (spin_string_beta_aabb.annihilate(r, sign_r)) {
+
+                                    for (size_t s = 0; s < this->K; s++) {  // s loops over all SOs
+                                        int sign_rs = sign_r;  // sign of the operator a^dagger_s_beta a_r_beta
+
+                                        if (spin_string_beta_aabb.create(s, sign_rs)) {
+                                            size_t J_beta = spin_string_beta_aabb.address(this->addressing_scheme_beta);  // the string that couples to I_beta
+
+                                            double c_I_alpha_I_beta = this->eigensolver_ptr->get_eigenvector(I_alpha*this->dim_beta + I_beta);  // alpha addresses are 'major'
+                                            double c_J_alpha_J_beta = this->eigensolver_ptr->get_eigenvector(J_alpha*this->dim_beta + J_beta);
+                                            this->two_rdm_aabb(p,q,r,s) += sign_pq * sign_rs * c_I_alpha_I_beta * c_J_alpha_J_beta;
+
+                                            spin_string_beta_aabb.annihilate(s);  // undo the previous creation
+                                        }
+                                    }  // loop over s
+
+
+                                    spin_string_beta_aabb.create(r);  // undo the previous annihilation
+                                }
+
+                            }  // loop over r
+                        }  // loop over beta addresses
+
+                        spin_string_alpha_aabb.annihilate(q);  // undo the previous creation
+                    }
+                }  // loop over q
+
+
+                spin_string_alpha_aabb.create(p);  // undo the previous annihilation
+            }
+        }  // loop over p
+    }  // loop over alpha addresses
+
+
+    // BETA-BETA-ALPHA-ALPHA
+    // We know that d^aabb_pqrs = d^bbaa_rspq
+    Eigen::array<int, 4> shuffle {2, 3, 0, 1};  // array specifying the axes that should be swapped
+    this->two_rdm_bbaa = this->two_rdm_aabb.shuffle(shuffle);
 
 
     // BETA-BETA-BETA-BETA
-    bmqc::SpinString<boost::dynamic_bitset<>> spin_string_beta (0, this->addressing_scheme_beta);  // spin string with address 0
+    bmqc::SpinString<boost::dynamic_bitset<>> spin_string_beta_bbbb (0, this->addressing_scheme_beta);  // spin string with address 0
     for (size_t I_beta = 0; I_beta < this->dim_beta; I_beta++) {  // I_beta loops over all the addresses of the beta spin strings
         if (I_beta > 0) {
-            spin_string_beta.nextPermutation();
+            spin_string_beta_bbbb.nextPermutation();
         }
 
         for (size_t p = 0; p < this->K; p++) {  // p loops over SOs
             int sign_p = 1;  // sign of the operator a_p
 
-            if (spin_string_beta.annihilate(p, sign_p)) {  // if p is not in I_beta
+            if (spin_string_beta_bbbb.annihilate(p, sign_p)) {  // if p is not in I_beta
 
                 for (size_t r = 0; r < this->K; r++) {  // r loops over SOs
                     int sign_pr = sign_p;  // sign of the operator a_r a_p
 
-                    if (spin_string_beta.annihilate(r, sign_pr)) {  // if r is not in I_beta
+                    if (spin_string_beta_bbbb.annihilate(r, sign_pr)) {  // if r is not in I_beta
 
                         for (size_t s = 0; s < this->K; s++) {  // s loops over SOs
                             int sign_prs = sign_pr;  // sign of the operator a^dagger_s a_r a_p
 
-                            if (spin_string_beta.create(s, sign_prs)) {  // if s is in I_beta
+                            if (spin_string_beta_bbbb.create(s, sign_prs)) {  // if s is in I_beta
 
                                 for (size_t q = 0; q < this->K; q++) {  // q loops over SOs
                                     int sign_prsq = sign_prs;  // sign of the operator a^dagger_q a^dagger_s a_r a_p
 
-                                    if (spin_string_beta.create(q, sign_prsq)) {  // if q is not in I_beta
-                                        size_t J_beta = spin_string_beta.address(this->addressing_scheme_beta);  // address of the coupling string
+                                    if (spin_string_beta_bbbb.create(q, sign_prsq)) {  // if q is not in I_beta
+                                        size_t J_beta = spin_string_beta_bbbb.address(this->addressing_scheme_beta);  // address of the coupling string
 
                                         double contribution = 0.0;
                                         for (size_t I_alpha = 0; I_alpha < this->dim_beta; I_alpha++) {
@@ -579,26 +643,22 @@ void FCI::calculate2RDMs() {
 
                                         this->two_rdm_bbbb(p,q,r,s) += sign_prsq * contribution;
 
-                                        spin_string_beta.annihilate(q);  // undo the previous creation
+                                        spin_string_beta_bbbb.annihilate(q);  // undo the previous creation
                                     }
                                 }  // loop over q
 
-                                spin_string_beta.annihilate(s);  // undo the previous creation
+                                spin_string_beta_bbbb.annihilate(s);  // undo the previous creation
                             }
                         }  // loop over s
 
-                        spin_string_beta.create(r);  // undo the previous annihilation
+                        spin_string_beta_bbbb.create(r);  // undo the previous annihilation
                     }
                 }  // loop over r
 
-                spin_string_beta.create(p);  // undo the previous annihilation
+                spin_string_beta_bbbb.create(p);  // undo the previous annihilation
             }
         }  // loop over p
     }  // loop over I_beta
-    std::cout << "We're done for bbbb." << std::endl;
-
-
-
 
     this->are_computed_two_rdms = true;
 }
