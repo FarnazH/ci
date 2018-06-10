@@ -660,9 +660,10 @@ void FCI::calculate2RDMs() {
         }  // loop over p
     }  // loop over I_beta
 
+
+    this->two_rdm = this->two_rdm_aaaa + this->two_rdm_aabb + this->two_rdm_bbaa + this->two_rdm_bbbb;
     this->are_computed_two_rdms = true;
 }
-
 
 
 }  // namespace ci
