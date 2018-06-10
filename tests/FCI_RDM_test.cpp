@@ -152,3 +152,51 @@ BOOST_AUTO_TEST_CASE ( H2O_1RDM_2RDM_trace_FCI ) {
 
     BOOST_CHECK(D.isApprox(D_from_reduction, 1.0e-12));
 }
+
+
+BOOST_AUTO_TEST_CASE ( H2O_energy_RDM_contraction_FCI ) {
+
+    // Test if the contraction of the 1- and 2-RDMs with the one- and two-electron integrals gives the FCI energy
+
+
+    // Prepare the AO basis
+    size_t N_alpha = 5;
+    size_t N_beta = 5;
+    size_t N = N_alpha + N_beta;
+
+    libwint::Molecule h2o ("../tests/reference_data/h2o_Psi4_GAMESS.xyz");
+    libwint::AOBasis ao_basis (h2o, "STO-3G");
+    ao_basis.calculateIntegrals();
+
+    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> saes (ao_basis.get_S());
+    libwint::SOBasis so_basis (ao_basis, saes.operatorInverseSqrt());  // Löwdin orthogonalization of the AOBasis
+    Eigen::MatrixXd h = so_basis.get_h_SO();
+    Eigen::Tensor<double, 4> g = so_basis.get_g_SO();
+
+    // Do a dense FCI calculation based on a given SO basis, and calculate the 1- and 2-RDMs
+    ci::FCI fci (so_basis, N_alpha, N_beta);
+    fci.solve(numopt::eigenproblem::SolverType::DENSE);
+    fci.calculate1RDMs();
+    fci.calculate2RDMs();
+
+    double energy_by_eigenvalue = fci.get_eigenvalue();
+
+
+    // Calculate the FCI energy as the relevant contraction with the one- and two-electron integrals
+    Eigen::MatrixXd D = fci.get_one_rdm();
+    double energy_by_contraction = (h * D).trace();
+
+    Eigen::Tensor<double, 4> d = fci.get_two_rdm();
+
+    // Specify the contractions for the relevant contraction of the two-electron integrals and the 2-RDM
+    //      0.5 g(p q r s) d(p q r s)
+    Eigen::array<Eigen::IndexPair<int>, 4> contractions = {Eigen::IndexPair<int>(0,0), Eigen::IndexPair<int>(1,1), Eigen::IndexPair<int>(2,2), Eigen::IndexPair<int>(3,3)};
+    //      Perform the contraction
+    Eigen::Tensor<double, 0> contraction = 0.5 * g.contract(d, contractions);
+
+    // As the contraction is a scalar (a tensor of rank 0), we should access by (0).
+    energy_by_contraction += contraction(0);
+
+
+    BOOST_CHECK(std::abs(energy_by_eigenvalue - energy_by_contraction) < 1.0e-12);
+}
