@@ -6,6 +6,7 @@
 
 #include "FCI.hpp"
 
+
 #include "DOCI.hpp"
 
 #include <boost/test/unit_test.hpp>
