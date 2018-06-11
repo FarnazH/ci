@@ -4,6 +4,8 @@
 #include <hf.hpp>
 #include <cpputil.hpp>
 
+#include "FCI.hpp"
+
 #include "DOCI.hpp"
 
 #include <boost/test/unit_test.hpp>
@@ -69,7 +71,21 @@ BOOST_AUTO_TEST_CASE ( OO_DOCI_h2_6_31g ) {
     libwint::SOBasis so_basis (ao_basis, coefficient_matrix);
 
 
-    // Do the DOCI orbital optimization
+    // Get the FCI natural orbitals
+    ci::FCI fci (so_basis, 1, 1);  // N_alpha = 1, N_beta = 1
+    // Specify solver options and solve the eigenvalue problem
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    fci.solve(&dense_options);
+
+    fci.calculate1RDMs();
+    Eigen::MatrixXd D = fci.get_one_rdm();
+    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> saes (D);
+
+    Eigen::MatrixXd U = saes.eigenvectors();
+    so_basis.rotate(U);
+
+
+    // Do the DOCI orbital optimization, using the FCI natural orbitals
     ci::DOCI doci (so_basis, h2);
 
     // Specify solver options and perform the orbital optimization
@@ -130,37 +146,37 @@ BOOST_AUTO_TEST_CASE ( OO_DOCI_h2_6_31gxx ) {
 }
 
 
-// FCI testing
-#include "FCI.hpp"
-BOOST_AUTO_TEST_CASE ( FCI_H2_Cristina_dense ) {
-
-    // Prepare the AO basis
-    libwint::Molecule h2 ("../tests/reference_data/h2_cristina.xyz");
-    libwint::AOBasis ao_basis (h2, "6-31g**");
-    ao_basis.calculateIntegrals();
-
-    // Prepare the SO basis from RHF coefficients
-    hf::rhf::RHF rhf (h2, ao_basis, 1.0e-06);
-    rhf.solve();
-    libwint::SOBasis so_basis (ao_basis, rhf.get_C_canonical());
-
-
-    // Do a dense FCI calculation based on a given SO basis
-    ci::FCI fci (so_basis, 1, 1);  // N_alpha = 1, N_beta = 1
-    // Specify solver options and solve the eigenvalue problem
-    numopt::eigenproblem::DenseSolverOptions dense_options;
-    fci.solve(&dense_options);
-
-
-
-
-
-    // Calculate the total FCI energy
-    double internuclear_repulsion_energy = h2.calculateInternuclearRepulsionEnergy();
-    double test_fci_energy = fci.get_eigenvalue() + internuclear_repulsion_energy;
-
-    BOOST_CHECK(std::abs(test_fci_energy - (reference_fci_energy)) < 1.0e-06);
-}
+//// FCI testing
+//#include "FCI.hpp"
+//BOOST_AUTO_TEST_CASE ( FCI_H2_Cristina_dense ) {
+//
+//    // Prepare the AO basis
+//    libwint::Molecule h2 ("../tests/reference_data/h2_cristina.xyz");
+//    libwint::AOBasis ao_basis (h2, "6-31g**");
+//    ao_basis.calculateIntegrals();
+//
+//    // Prepare the SO basis from RHF coefficients
+//    hf::rhf::RHF rhf (h2, ao_basis, 1.0e-06);
+//    rhf.solve();
+//    libwint::SOBasis so_basis (ao_basis, rhf.get_C_canonical());
+//
+//
+//    // Do a dense FCI calculation based on a given SO basis
+//    ci::FCI fci (so_basis, 1, 1);  // N_alpha = 1, N_beta = 1
+//    // Specify solver options and solve the eigenvalue problem
+//    numopt::eigenproblem::DenseSolverOptions dense_options;
+//    fci.solve(&dense_options);
+//
+//
+//
+//
+//
+//    // Calculate the total FCI energy
+//    double internuclear_repulsion_energy = h2.calculateInternuclearRepulsionEnergy();
+//    double test_fci_energy = fci.get_eigenvalue() + internuclear_repulsion_energy;
+//
+//    BOOST_CHECK(std::abs(test_fci_energy - (reference_fci_energy)) < 1.0e-06);
+//}
 
 
 //BOOST_AUTO_TEST_CASE ( OO_DOCI_h2o ) {
