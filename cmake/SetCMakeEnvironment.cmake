@@ -45,6 +45,7 @@ set(PROJECT_TESTS_FOLDER ${CMAKE_SOURCE_DIR}/tests)
 set(PROJECT_TEST_SOURCE_FILES
         ${PROJECT_TESTS_FOLDER}/DOCI_Davidson_test.cpp
         ${PROJECT_TESTS_FOLDER}/DOCI_dense_test.cpp
+        ${PROJECT_TESTS_FOLDER}/DOCI_orbital_optimization_test.cpp
         ${PROJECT_TESTS_FOLDER}/DOCI_RDM_test.cpp
         ${PROJECT_TESTS_FOLDER}/DOCI_sparse_test.cpp
         ${PROJECT_TESTS_FOLDER}/DOCI_test.cpp

@@ -81,7 +81,8 @@ BOOST_AUTO_TEST_CASE ( H2O_1RDM_spin_trace_FCI ) {
 
     // Calculate the FCI 1-RDMs
     ci::FCI fci (so_basis, N_alpha, N_beta);
-    fci.solve(numopt::eigenproblem::SolverType::DENSE);
+    numopt::eigenproblem::DenseSolverOptions dense_solver_options;
+    fci.solve(&dense_solver_options);
     fci.calculate1RDMs();
 
 
@@ -110,7 +111,8 @@ BOOST_AUTO_TEST_CASE ( H2O_2RDM_spin_trace_FCI ) {
 
     // Do a dense FCI calculation based on a given SO basis, and calculate the 2-RDMs
     ci::FCI fci (so_basis, N_alpha, N_beta);
-    fci.solve(numopt::eigenproblem::SolverType::DENSE);
+    numopt::eigenproblem::DenseSolverOptions dense_solver_options;
+    fci.solve(&dense_solver_options);
     fci.calculate2RDMs();
 
 
@@ -140,7 +142,8 @@ BOOST_AUTO_TEST_CASE ( H2O_1RDM_2RDM_trace_FCI ) {
 
     // Do a dense FCI calculation based on a given SO basis, and calculate the 1- and 2-RDMs
     ci::FCI fci (so_basis, N_alpha, N_beta);
-    fci.solve(numopt::eigenproblem::SolverType::DENSE);
+    numopt::eigenproblem::DenseSolverOptions dense_solver_options;
+    fci.solve(&dense_solver_options);
     fci.calculate1RDMs();
     fci.calculate2RDMs();
 
@@ -175,7 +178,8 @@ BOOST_AUTO_TEST_CASE ( H2O_energy_RDM_contraction_FCI ) {
 
     // Do a dense FCI calculation based on a given SO basis, and calculate the 1- and 2-RDMs
     ci::FCI fci (so_basis, N_alpha, N_beta);
-    fci.solve(numopt::eigenproblem::SolverType::DENSE);
+    numopt::eigenproblem::DenseSolverOptions dense_solver_options;
+    fci.solve(&dense_solver_options);
     fci.calculate1RDMs();
     fci.calculate2RDMs();
 
