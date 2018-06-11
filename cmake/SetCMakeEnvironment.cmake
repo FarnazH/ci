@@ -49,6 +49,7 @@ set(PROJECT_TEST_SOURCE_FILES
         ${PROJECT_TESTS_FOLDER}/DOCI_sparse_test.cpp
         ${PROJECT_TESTS_FOLDER}/DOCI_test.cpp
         ${PROJECT_TESTS_FOLDER}/FCI_dense_test.cpp
+        ${PROJECT_TESTS_FOLDER}/FCI_RDM_test.cpp
         ${PROJECT_TESTS_FOLDER}/FCI_sparse_test.cpp
         ${PROJECT_TESTS_FOLDER}/FCI_test.cpp)
 
