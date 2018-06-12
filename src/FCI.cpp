@@ -236,6 +236,7 @@ Eigen::VectorXd FCI::matrixVectorProduct(const Eigen::VectorXd& x) {
 
     Eigen::VectorXd matvec = Eigen::VectorXd::Zero(this->dim);
 
+
     // Calculate the effective one-electron integrals
     // TODO: move this to libwint
     Eigen::MatrixXd k_SO = this->so_basis.get_h_SO();
@@ -385,7 +386,7 @@ Eigen::VectorXd FCI::matrixVectorProduct(const Eigen::VectorXd& x) {
                                         if (spin_string_beta_aabb.create(s, sign_rs)) {
                                             size_t J_beta = spin_string_beta_aabb.address(this->addressing_scheme_beta);  // the address of the spin string that couples to I_beta
 
-                                            matvec(I_alpha*this->dim_beta) += this->so_basis.get_g_SO(p,q,r,s) * sign_pq * sign_rs * x(J_alpha*this->dim_beta + J_beta);  // alpha addresses are major
+                                            matvec(I_alpha*this->dim_beta + I_beta) += this->so_basis.get_g_SO(p,q,r,s) * sign_pq * sign_rs * x(J_alpha*this->dim_beta + J_beta);  // alpha addresses are major
 
                                             spin_string_beta_aabb.annihilate(s);  // undo the previous creation
                                         }
