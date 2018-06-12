@@ -233,7 +233,228 @@ void FCI::constructHamiltonian(numopt::eigenproblem::BaseMatrixSolver* matrix_so
  *  @return the action of the FCI Hamiltonian of the coefficient vector @param x.
  */
 Eigen::VectorXd FCI::matrixVectorProduct(const Eigen::VectorXd& x) {
-    throw std::logic_error("This function hasn't been implemented yet.");
+
+    Eigen::VectorXd matvec = Eigen::VectorXd::Zero(this->dim);
+
+    // Calculate the effective one-electron integrals
+    // TODO: move this to libwint
+    Eigen::MatrixXd k_SO = this->so_basis.get_h_SO();
+    for (size_t p = 0; p < this->K; p++) {
+        for (size_t q = 0; q < this->K; q++) {
+            for (size_t r = 0; r < this->K; r++) {
+                k_SO(p,q) -= 0.5 * this->so_basis.get_g_SO(p,r,r,q);
+            }
+        }
+    }
+
+
+    // ALPHA-ALPHA
+    bmqc::SpinString<boost::dynamic_bitset<>> spin_string_alpha_aa (0, this->addressing_scheme_alpha);  // spin string with address 0
+    for (size_t I_alpha = 0; I_alpha < this->dim_alpha; I_alpha++) {  // I_alpha loops over all the addresses of the alpha spin strings
+        if (I_alpha > 0) {
+            spin_string_alpha_aa.nextPermutation();
+        }
+
+        for (size_t p = 0; p < this->K; p++) {  // p loops over SOs
+            int sign_p = 1;  // sign of the operator a_p_alpha
+            if (spin_string_alpha_aa.annihilate(p, sign_p)) {  // if p is in I_alpha
+
+                for (size_t q = 0; q < this->K; q++) {  // q loops over SOs
+                    int sign_pq = sign_p;  // sign of the operator a^dagger_q_alpha a_p_alpha
+                    if (spin_string_alpha_aa.create(q, sign_pq)) {  // if q is not occupied in I_alpha
+                        size_t J_alpha = spin_string_alpha_aa.address(this->addressing_scheme_alpha);  // find all strings J_alpha that couple to I_alpha
+
+                        for (size_t I_beta = 0; I_beta < this->dim_beta; I_beta++) {  // I_beta loops over all addresses of the beta spin strings
+                            matvec(I_alpha*this->dim_beta + I_beta) += k_SO(p,q) * sign_pq * x(J_alpha*this->dim_beta + I_beta);  // alpha addresses are major
+                        }
+
+                        spin_string_alpha_aa.annihilate(q);  // undo the previous creation
+                    }
+                }  // q loop
+
+                spin_string_alpha_aa.create(p);  // undo the previous annihilation
+            }
+        }  // p loop
+    }  // I_alpha loop
+
+
+    // BETA-BETA
+    bmqc::SpinString<boost::dynamic_bitset<>> spin_string_beta_bb (0, this->addressing_scheme_beta);  // spin string with address 0
+    for (size_t I_beta = 0; I_beta < this->dim_beta; I_beta++) {  // I_beta loops over all the addresses of the beta spin strings
+        if (I_beta > 0) {
+            spin_string_beta_bb.nextPermutation();
+        }
+
+        for (size_t p = 0; p < this->K; p++) {  // p loops over SOs
+            int sign_p = 1;  // sign of the operator a_p_beta
+            if (spin_string_beta_bb.annihilate(p, sign_p)) {  // if p is in I_beta
+
+                for (size_t q = 0; q < this->K; q++) {  // q loops over SOs
+                    int sign_pq = sign_p;  // sign of the operator a^dagger_q_beta a_p_beta
+                    if (spin_string_beta_bb.create(q, sign_pq)) {  // if q is not occupied in I_beta
+                        size_t J_beta = spin_string_beta_bb.address(this->addressing_scheme_beta);  // find all strings J_beta that couple to I_beta
+
+                        for (size_t I_alpha = 0; I_alpha < this->dim_alpha; I_alpha++) {  // I_alpha loops over all addresses of the alpha spin strings
+                            matvec(I_alpha*this->dim_beta + I_beta) += k_SO(p,q) * sign_pq * x(I_alpha*this->dim_beta + J_beta);  // alpha addresses are major
+                        }
+
+                        spin_string_beta_bb.annihilate(q);  // undo the previous creation
+                    }
+                }  // q loop
+
+                spin_string_beta_bb.create(p);  // undo the previous annihilation
+            }
+        }  // p loop
+    }  // I_beta loop
+
+
+    // ALPHA-ALPHA-ALPHA-ALPHA
+    bmqc::SpinString<boost::dynamic_bitset<>> spin_string_alpha_aaaa (0, this->addressing_scheme_alpha);  // spin string with address 0
+    for (size_t I_alpha = 0; I_alpha < this->dim_alpha; I_alpha++) {  // I_alpha loops over all addresses of alpha spin strings
+        if (I_alpha > 0) {
+            spin_string_alpha_aaaa.nextPermutation();
+        }
+
+        for (size_t p = 0; p < this->K; p++) {  // p loops over SOs
+            int sign_p = 1;  // sign of the operator a_p_alpha
+            if (spin_string_alpha_aaaa.annihilate(p, sign_p)) {
+
+                for (size_t q = 0; q < this->K; q++) {  // q loops over SOs
+                    int sign_pq = sign_p;  // sign of the operator a^dagger_q_alpha a_p_alpha
+                    if (spin_string_alpha_aaaa.create(q, sign_pq)) {
+
+                        for (size_t r = 0; r < this->K; r++) {  // r loops over SOs
+                            int sign_pqr = sign_pq;  // sign of the operator a_r_alpha a^dagger_q_alpha a_p_alpha
+                            if (spin_string_alpha_aaaa.annihilate(r, sign_pqr)) {
+
+                                for (size_t s = 0; s < this->K; s++) {  // s loops over SOs
+                                    int sign_pqrs = sign_pqr;  // sign of the operator a^dagger_s_alpha a_r_alpha a^dagger_q_alpha a_p_alpha
+                                    if (spin_string_alpha_aaaa.create(s, sign_pqrs)) {
+                                        size_t J_alpha = spin_string_alpha_aaaa.address(this->addressing_scheme_alpha);  // the address of the string J_alpha that couples to I_alpha
+
+                                        for (size_t I_beta = 0; I_beta < this->dim_beta; I_beta++) {  // I_beta loops over all beta addresses
+                                            matvec(I_alpha*this->dim_beta + I_beta) += 0.5 * this->so_basis.get_g_SO(p,q,r,s) * sign_pqrs * x(J_alpha*this->dim_beta + I_beta);
+                                        }
+
+                                        spin_string_alpha_aaaa.annihilate(s);  // undo the previous creation
+                                    }
+                                }  // loop over s
+
+                                spin_string_alpha_aaaa.create(r);  // undo the previous annihilation
+                            }
+                        }  // loop over r
+
+                        spin_string_alpha_aaaa.annihilate(q);  // undo the previous creation
+                    }
+                }  // loop over q
+
+                spin_string_alpha_aaaa.create(p);  // undo the previous creation
+            }
+        }  // loop over p
+    }  // loop over I_alpha
+
+
+    // ALPHA-ALPHA-BETA-BETA (and BETA-BETA-ALPHA-ALPHA)
+    bmqc::SpinString<boost::dynamic_bitset<>> spin_string_alpha_aabb (0, this->addressing_scheme_alpha);  // spin string with address 0
+    for (size_t I_alpha = 0; I_alpha < this->dim_alpha; I_alpha++) {  // I_alpha loops over all addresses of alpha spin strings
+        if (I_alpha > 0) {
+            spin_string_alpha_aabb.nextPermutation();
+        }
+
+        for (size_t p = 0; p < this->K; p++) {  // p loops over SOs
+            int sign_p = 1;  // sign of the operator a_p_alpha
+            if (spin_string_alpha_aabb.annihilate(p, sign_p)) {
+
+                for (size_t q = 0; q < this->K; q++) {
+                    int sign_pq = sign_p;  // sign of the operator a^dagger_q_alpha a_p_alpha
+                    if (spin_string_alpha_aabb.create(q, sign_pq)) {
+                        size_t J_alpha = spin_string_alpha_aabb.address(this->addressing_scheme_alpha);  // the address of the spin string that couples to I_alpha
+
+                        bmqc::SpinString<boost::dynamic_bitset<>> spin_string_beta_aabb (0, this->addressing_scheme_beta);  // spin string with address 0
+                        for (size_t I_beta = 0; I_beta < this->dim_beta; I_beta++) {  // I_beta loops over all addresses of beta spin strings
+                            if (I_beta > 0) {
+                                spin_string_beta_aabb.nextPermutation();
+                            }
+
+                            for (size_t r = 0; r < this->K; r++) {  // r loops over SOs
+                                int sign_r = 1;  // sign of the operator a_r_beta
+                                if (spin_string_beta_aabb.annihilate(r, sign_r)) {
+
+                                    for (size_t s = 0; s < this->K; s++) {  // s loops over SOs
+                                        int sign_rs = sign_r;  // sign of the operato a^dagger_s_beta a_r_beta
+                                        if (spin_string_beta_aabb.create(s, sign_rs)) {
+                                            size_t J_beta = spin_string_beta_aabb.address(this->addressing_scheme_beta);  // the address of the spin string that couples to I_beta
+
+                                            matvec(I_alpha*this->dim_beta) += this->so_basis.get_g_SO(p,q,r,s) * sign_pq * sign_rs * x(J_alpha*this->dim_beta + J_beta);  // alpha addresses are major
+
+                                            spin_string_beta_aabb.annihilate(s);  // undo the previous creation
+                                        }
+                                    }  // loop over r
+
+                                    spin_string_beta_aabb.create(r);  // undo the previous annihilation
+                                }
+                            }  // loop over r
+
+
+                        }  // I_beta loop
+
+                        spin_string_alpha_aabb.annihilate(q);  // undo the previous creation
+                    }
+                }  // loop over q
+
+                spin_string_alpha_aabb.create(p);  // undo the previous annihilation
+            }
+        }  // loop over p
+    }  // loop over I_alpha
+
+
+    // BETA-BETA-BETA-BETA
+    bmqc::SpinString<boost::dynamic_bitset<>> spin_string_beta_bbbb (0, this->addressing_scheme_beta);  // spin string with address 0
+    for (size_t I_beta = 0; I_beta < this->dim_beta; I_beta++) {  // I_beta loops over all addresses of beta spin strings
+        if (I_beta > 0) {
+            spin_string_beta_bbbb.nextPermutation();
+        }
+
+        for (size_t p = 0; p < this->K; p++) {  // p loops over SOs
+            int sign_p = 1;  // sign of the operator a_p_beta
+            if (spin_string_beta_bbbb.annihilate(p, sign_p)) {
+
+                for (size_t q = 0; q < this->K; q++) {  // q loops over SOs
+                    int sign_pq = sign_p;  // sign of the operator a^dagger_q_beta a_p_beta
+                    if (spin_string_beta_bbbb.create(q, sign_pq)) {
+
+                        for (size_t r = 0; r < this->K; r++) {  // r loops over SOs
+                            int sign_pqr = sign_pq;  // sign of the operator a_r_beta a^dagger_q_beta a_p_beta
+                            if (spin_string_beta_bbbb.annihilate(r, sign_pqr)) {
+
+                                for (size_t s = 0; s < this->K; s++) {  // s loops over SOs
+                                    int sign_pqrs = sign_pqr;  // sign of the operator a^dagger_s_beta a_r_beta a^dagger_q_beta a_p_beta
+                                    if (spin_string_beta_bbbb.create(s, sign_pqrs)) {
+                                        size_t J_beta = spin_string_beta_bbbb.address(this->addressing_scheme_beta);  // the address of the string J_beta that couples to I_beta
+
+                                        for (size_t I_alpha = 0; I_alpha < this->dim_alpha; I_alpha++) {  // I_alpha loops over all alpha addresses
+                                            matvec(I_alpha*this->dim_beta + I_beta) += 0.5 * this->so_basis.get_g_SO(p,q,r,s) * sign_pqrs * x(I_alpha*this->dim_beta + J_beta);
+                                        }
+
+                                        spin_string_beta_bbbb.annihilate(s);  // undo the previous creation
+                                    }
+                                }  // loop over s
+
+                                spin_string_beta_bbbb.create(r);  // undo the previous annihilation
+                            }
+                        }  // loop over r
+
+                        spin_string_beta_bbbb.annihilate(q);  // undo the previous creation
+                    }
+                }  // loop over q
+
+                spin_string_beta_bbbb.create(p);  // undo the previous creation
+            }
+        }  // loop over p
+    }  // loop over I_alpha
+
+
+    return matvec;
 }
 
 
