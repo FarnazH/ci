@@ -9,6 +9,7 @@
 
 
 
+// dim = 120
 BOOST_AUTO_TEST_CASE ( DOCI_beh_cation_klaas_dense ) {
 
     // Klaas' reference DOCI energy for BeH+ (obtained through Caitlin)
@@ -33,6 +34,7 @@ BOOST_AUTO_TEST_CASE ( DOCI_beh_cation_klaas_dense ) {
 }
 
 
+// dim = 120
 BOOST_AUTO_TEST_CASE ( DOCI_lih_klaas_dense ) {
 
     // Klaas' reference DOCI energy for LiH (obtained through Caitlin)
@@ -57,6 +59,7 @@ BOOST_AUTO_TEST_CASE ( DOCI_lih_klaas_dense ) {
 }
 
 
+// dim = 816
 BOOST_AUTO_TEST_CASE ( DOCI_li2_klaas_dense ) {
 
     // Klaas' reference DOCI energy for Li2
