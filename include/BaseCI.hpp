@@ -94,6 +94,7 @@ public:
 
     // GETTERS
     size_t get_dim() const { return this->dim; }
+    Eigen::VectorXd get_diagonal() const { return this->diagonal; }
 
     // GETTERS - EIGENPAIR
     std::vector<numopt::eigenproblem::Eigenpair> get_eigenpairs() const { return this->eigensolver_ptr->get_eigenpairs(); }
