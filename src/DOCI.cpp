@@ -181,9 +181,6 @@ DOCI::DOCI(libwint::SOBasis& so_basis, size_t N) :
     if ((N % 2) != 0) {
         throw std::invalid_argument("You gave an odd amount of electrons, which is not suitable for DOCI.");
     }
-
-    // We can already calculate the diagonal, since this only has to be done once
-    this->calculateDiagonal();
 }
 
 

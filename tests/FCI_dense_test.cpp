@@ -8,6 +8,54 @@
 
 
 
+BOOST_AUTO_TEST_CASE ( test_random_rotation_diagonal_dense_fci ) {
+
+    // Check if a random rotation has no effect on the sum of the diagonal elements
+
+    // Prepare an SOBasis from an RHF calculation
+    libwint::Molecule h2o ("../tests/reference_data/h2o.xyz");
+    libwint::AOBasis ao_basis (h2o, "STO-3G");
+    ao_basis.calculateIntegrals();
+
+    hf::rhf::RHF rhf (h2o, ao_basis, 1.0e-06);
+    rhf.solve();
+
+    Eigen::MatrixXd coefficient_matrix = rhf.get_C_canonical();
+    libwint::SOBasis so_basis (ao_basis, coefficient_matrix);
+    size_t K = so_basis.get_K();
+
+
+    // Specify solver options and do a DOCI calculation
+    ci::FCI fci1 (so_basis, 5, 5);
+    numopt::eigenproblem::DenseSolverOptions dense_options1;
+    fci1.solve(&dense_options1);
+
+    Eigen::VectorXd diagonal1 = fci1.get_diagonal();
+
+
+    // Get a random unitary matrix by diagonalizing a random symmetric matrix
+    Eigen::MatrixXd A_random = Eigen::MatrixXd::Random(K, K);
+    Eigen::MatrixXd A_symmetric = A_random + A_random.transpose();
+    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> unitary_solver (A_symmetric);
+    Eigen::MatrixXd U_random = unitary_solver.eigenvectors();
+
+
+    // Rotate the SOBasis using the random unitary matrix
+    so_basis.rotate(U_random);
+
+
+    // Specify solver options and do a DOCI calculation
+    ci::FCI fci2 (so_basis, 5 ,5);
+    numopt::eigenproblem::DenseSolverOptions dense_options2;
+    fci2.solve(&dense_options2);
+
+    Eigen::VectorXd diagonal2 = fci2.get_diagonal();
+
+
+    BOOST_CHECK(std::abs(diagonal1.sum() - diagonal2.sum()) < 1.0e-10);
+}
+
+
 // dim = 100
 BOOST_AUTO_TEST_CASE ( FCI_H2_Cristina_dense ) {
 

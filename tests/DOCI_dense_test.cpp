@@ -1,6 +1,7 @@
 #define BOOST_TEST_MODULE "DOCI_dense_test"
 
 
+#include "hf.hpp"
 
 #include "DOCI.hpp"
 

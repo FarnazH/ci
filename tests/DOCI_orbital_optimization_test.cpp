@@ -200,11 +200,11 @@ BOOST_AUTO_TEST_CASE ( tessteat ) {
 // dim = 21
 BOOST_AUTO_TEST_CASE ( OO_DOCI_h2o_STO_3G ) {
 
-    double reference_fci_energy = -82.9840637947819;
+    double reference_fci_energy = -83.0153473690853;
 
     // Prepare an SOBasis from an RHF calculation
     libwint::Molecule h2o ("../tests/reference_data/h2o.xyz");
-    double internuclear_repulsion_energy = h2o.calculateInternuclearRepulsionEnergy();  // 8.00236697416617
+    double internuclear_repulsion_energy = h2o.calculateInternuclearRepulsionEnergy();
 
     libwint::AOBasis ao_basis (h2o, "STO-3G");
     ao_basis.calculateIntegrals();
@@ -221,7 +221,6 @@ BOOST_AUTO_TEST_CASE ( OO_DOCI_h2o_STO_3G ) {
 //    // Specify solver options and solve the eigenvalue problem
 //    numopt::eigenproblem::DenseSolverOptions dense_options;
 //    fci.solve(&dense_options);
-//    std::cout << "FCI ENERGY DENSE CALCULATED : " << std::setprecision(15) << fci.get_lowest_eigenvalue() << std::endl;
 //
 //    fci.calculate1RDMs();
 //    Eigen::MatrixXd D = fci.get_one_rdm();
@@ -250,3 +249,7 @@ BOOST_AUTO_TEST_CASE ( OO_DOCI_h2o_STO_3G ) {
 
     BOOST_CHECK(std::abs(OO_DOCI_energy - reference_fci_energy) < 1.0e-12);
 }
+
+
+
+

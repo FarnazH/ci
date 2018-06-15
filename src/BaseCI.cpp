@@ -22,6 +22,8 @@
 #include "SparseSolver.hpp"
 
 
+#include <iomanip>
+
 
 namespace ci {
 
@@ -78,6 +80,11 @@ BaseCI::~BaseCI() {
  */
 void BaseCI::solve(numopt::eigenproblem::BaseSolverOptions* solver_options_ptr) {
 
+    // The diagonal should be recalculated every time solve is called, since this->so_basis can have changed in between
+    // subsequent diagonalization calls
+    this->calculateDiagonal();
+    std::cout << "diagonal sum: " << std::setprecision(15) << this->diagonal.sum() << std::endl;
+
 
     // Depending on how the user wants to solve the eigenvalue problem, construct the appropriate solver
     switch (solver_options_ptr->get_solver_type()) {
@@ -105,7 +112,7 @@ void BaseCI::solve(numopt::eigenproblem::BaseSolverOptions* solver_options_ptr) 
             numopt::VectorFunction matrixVectorProduct = [this](const Eigen::VectorXd& x) { return this->matrixVectorProduct(x); };
 
             // Dynamic-cast to the derived pointer type, to be able to access X_0 (the initial guess(es))
-            auto* davidson_solver_options_ptr = dynamic_cast<numopt::eigenproblem::DavidsonSolverOptions*> (solver_options_ptr);  // it's OK if this pointer goes out of scope, we still have solver_options_ptr that's pointing to it
+            auto davidson_solver_options_ptr = dynamic_cast<numopt::eigenproblem::DavidsonSolverOptions*> (solver_options_ptr);  // it's OK if this pointer goes out of scope, we still have solver_options_ptr that's pointing to it
 
             this->eigensolver_ptr = new numopt::eigenproblem::DavidsonSolver(matrixVectorProduct, this->diagonal, davidson_solver_options_ptr->X_0);  // deleted in the destructor
             this->eigensolver_ptr->solve();
