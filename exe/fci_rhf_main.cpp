@@ -40,9 +40,9 @@ int main (int argc, char** argv) {
 
 
     // Print the energy to an output file
-    // Create and open a file: filename.xyz -> filename_fci.output
+    // Create and open a file: filename.xyz -> filename_fci_lowdin_basisset.output
     std::string output_filename = xyz_filename;
-    boost::replace_last(output_filename, ".xyz", std::string("_fci_") + basisset + std::string(".output"));
+    boost::replace_last(output_filename, ".xyz", std::string("_fci_rhf_") + basisset + std::string(".output"));
 
     std::ofstream output_file;
     output_file.open(output_filename, std::fstream::out);
