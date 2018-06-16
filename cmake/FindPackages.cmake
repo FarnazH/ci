@@ -11,7 +11,7 @@ find_package(Eigen3 3.3.4 REQUIRED)
 find_package(hf 3.0.0 REQUIRED)
 
 # Find the libint integral wrapper (also includes support for integral transformations)
-find_package(libwint 3.0.1 REQUIRED)  # FIXME: this should become 3.1.0
+find_package(libwint 3.1.0 REQUIRED)
 
 # Find bmqc for bitset manipulations
 find_package(bmqc 1.0.1 REQUIRED)
