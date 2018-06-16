@@ -29,13 +29,18 @@ int main (int argc, char** argv) {
 
 
     // Prepare an SOBasis by using Löwding orthogonalization
-    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> saes (ao_basis.get_S());
-    libwint::SOBasis so_basis (ao_basis, saes.operatorInverseSqrt());  // Löwdin orthogonalization of the AOBasis
+//    std::cout << "S: " << std::endl << ao_basis.get_S() << std::endl << std::endl;
+//    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> saes (ao_basis.get_S());
+//    std::cout << "S^{-1/2}: " << std::endl << saes.operatorInverseSqrt() << std::endl << std::endl;
+//    libwint::SOBasis so_basis (ao_basis, saes.operatorInverseSqrt());  // Löwdin orthogonalization of the AOBasis
+//    std::cout << "H_SO: " << std::endl << so_basis.get_h_SO() << std::endl << std::endl;
+//    std::cout << "G_SO: " << std::endl << so_basis.get_g_SO() << std::endl << std::endl;
+
 
 //    // Prepare the SO basis from RHF coefficients
-//    hf::rhf::RHF rhf (molecule, ao_basis, 1.0e-03);
-//    rhf.solve(hf::rhf::solver::SCFSolverType::DIIS);
-//    libwint::SOBasis so_basis (ao_basis, rhf.get_C_canonical());
+    hf::rhf::RHF rhf (molecule, ao_basis, 1.0e-06);
+    rhf.solve(hf::rhf::solver::SCFSolverType::DIIS);
+    libwint::SOBasis so_basis (ao_basis, rhf.get_C_canonical());
 
     // Do a FCI calculation
     ci::FCI fci (so_basis, molecule.get_N()/2, molecule.get_N()/2);  // assume N_alpha = N_beta
