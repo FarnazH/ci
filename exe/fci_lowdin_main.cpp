@@ -4,7 +4,6 @@
 #include <boost/algorithm/string.hpp>
 
 #include "ci.hpp"
-#include "hf.hpp"
 #include "libwint.hpp"
 #include "numopt.hpp"
 
@@ -28,10 +27,9 @@ int main (int argc, char** argv) {
     ao_basis.calculateIntegrals();
 
 
-    // Prepare the SO basis from RHF coefficients
-    hf::rhf::RHF rhf (molecule, ao_basis, 1.0e-06);
-    rhf.solve(hf::rhf::solver::SCFSolverType::DIIS);
-    libwint::SOBasis so_basis (ao_basis, rhf.get_C_canonical());
+    // Prepare an SOBasis by using Löwdin orthogonalization
+    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> saes (ao_basis.get_S());
+    libwint::SOBasis so_basis (ao_basis, saes.operatorInverseSqrt());  // Löwdin orthogonalization of the AOBasis
 
 
     // Do a FCI calculation
