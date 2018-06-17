@@ -12,7 +12,7 @@ A C++ library for performing configuration interaction (CI) calculations.
 [![cpputil Dependency](https://img.shields.io/badge/cpputil-1.4.0+-blue.svg)](https://github.com/GQCG/cpputil)
 [![bmqc Dependency](https://img.shields.io/badge/bmqc-1.2.0+-blue.svg)](https://github.com/GQCG/bmqc)
 [![libwint Dependency](https://img.shields.io/badge/libwint-3.1.0+-blue.svg)](https://github.com/GQCG/libwint)
-[![hf Dependency](https://img.shields.io/badge/hf-3.0.0+-blue.svg)](https://github.com/GQCG/hf)
+[![hf Dependency](https://img.shields.io/badge/hf-3.1.0+-blue.svg)](https://github.com/GQCG/hf)
 [![numopt Dependency](https://img.shields.io/badge/numopt-1.3.0+-blue.svg)](https://github.com/GQCG/numopt)
 
 
