@@ -20,4 +20,4 @@ find_package(bmqc 1.0.1 REQUIRED)
 find_package(numopt 1.2.0 REQUIRED)  # FIXME: this should become 1.3.0
 
 # Find cpputil
-find_package(cpputil 1.3.0 REQUIRED)  # FIXME: this should become 1.4.0
+find_package(cpputil 1.4.0 REQUIRED)
