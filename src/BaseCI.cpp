@@ -83,7 +83,6 @@ void BaseCI::solve(numopt::eigenproblem::BaseSolverOptions* solver_options_ptr) 
     // The diagonal should be recalculated every time solve is called, since this->so_basis can have changed in between
     // subsequent diagonalization calls
     this->calculateDiagonal();
-    std::cout << "diagonal sum: " << std::setprecision(15) << this->diagonal.sum() << std::endl;
 
 
     // Depending on how the user wants to solve the eigenvalue problem, construct the appropriate solver
