@@ -28,11 +28,9 @@ int main (int argc, char** argv) {
     ao_basis.calculateIntegrals();
 
 
-    // Prepare the SO basis from RHF coefficients
-    hf::rhf::RHF rhf (molecule, ao_basis, 1.0e-06);
-    rhf.solve(hf::rhf::solver::SCFSolverType::DIIS);
-    libwint::SOBasis so_basis (ao_basis, rhf.get_C_canonical());
-
+    // Prepare an initial SOBasis by using Löwdin orthogonalization
+    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> saes_S (ao_basis.get_S());
+    libwint::SOBasis so_basis (ao_basis, saes_S.operatorInverseSqrt());  // Löwdin orthogonalization of the AOBasis
 
     // Get the FCI natural orbitals
     ci::FCI fci (so_basis, molecule.get_N()/2, molecule.get_N()/2);
@@ -42,29 +40,19 @@ int main (int argc, char** argv) {
 
     fci.calculate1RDMs();
     Eigen::MatrixXd D = fci.get_one_rdm();
-    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> saes (D);
+    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> saes_D (D);
 
-    Eigen::MatrixXd U = saes.eigenvectors();
+    Eigen::MatrixXd U = saes_D.eigenvectors();
     so_basis.rotate(U);
 
 
-    // Do a DOCI calculation
+    // Do an OO-DOCI calculation
     ci::DOCI doci (so_basis, molecule);
-    doci.solve(&dense_options);
-
-
-    // Specify solver options and perform the orbital optimization
-    numopt::eigenproblem::DavidsonSolverOptions davidson_options;
-    //  In lexical notation, the Hartree-Fock determinant has the lowest address
-    Eigen::VectorXd initial_guess = Eigen::VectorXd::Zero(doci.get_dim());
-
-    initial_guess(0) = 1;
-    davidson_options.X_0 = initial_guess;
-    doci.orbitalOptimize(&davidson_options);
+    doci.orbitalOptimize(&dense_options);
 
 
     // Print the energy to an output file
-    // Create and open a file: filename.xyz -> filename_fci.output
+    // Create and open a file: filename.xyz -> filename_oo_doci_fno_basisset.output
     std::string output_filename = xyz_filename;
     boost::replace_last(output_filename, ".xyz", std::string("_oo_doci_fno_") + basisset + std::string(".output"));
 

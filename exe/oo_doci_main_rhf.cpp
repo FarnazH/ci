@@ -28,33 +28,19 @@ int main (int argc, char** argv) {
     ao_basis.calculateIntegrals();
 
 
-//    // Prepare an SOBasis by using Löwding orthogonalization
-//    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> saes (ao_basis.get_S());
-//    libwint::SOBasis so_basis (ao_basis, saes.operatorInverseSqrt());  // Löwdin orthogonalization of the AOBasis
-
     // Prepare the SO basis from RHF coefficients
     hf::rhf::RHF rhf (molecule, ao_basis, 1.0e-06);
     rhf.solve(hf::rhf::solver::SCFSolverType::DIIS);
     libwint::SOBasis so_basis (ao_basis, rhf.get_C_canonical());
 
-    // Do a DOCI calculation
+    // Do an OO-DOCI calculation
     ci::DOCI doci (so_basis, molecule);
     numopt::eigenproblem::DenseSolverOptions dense_options;
-    doci.solve(&dense_options);
-
-
-    // Specify solver options and perform the orbital optimization
-    numopt::eigenproblem::DavidsonSolverOptions davidson_options;
-    //  In lexical notation, the Hartree-Fock determinant has the lowest address
-    Eigen::VectorXd initial_guess = Eigen::VectorXd::Zero(doci.get_dim());
-
-    initial_guess(0) = 1;
-    davidson_options.X_0 = initial_guess;
-    doci.orbitalOptimize(&davidson_options);
+    doci.orbitalOptimize(&dense_options);
 
 
     // Print the energy to an output file
-    // Create and open a file: filename.xyz -> filename_fci.output
+    // Create and open a file: filename.xyz -> filename_oo_doci_rhf_basisset.output
     std::string output_filename = xyz_filename;
     boost::replace_last(output_filename, ".xyz", std::string("_oo_doci_rhf_") + basisset + std::string(".output"));
 
