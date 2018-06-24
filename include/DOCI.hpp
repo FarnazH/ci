@@ -90,7 +90,8 @@ public:
     /**
      *  Perform Newton-step-based orbital optimization
      */
-    void orbitalOptimize(numopt::eigenproblem::BaseSolverOptions* solver_options);
+    void orbitalOptimize(numopt::eigenproblem::BaseSolverOptions* solver_options_ptr, size_t maximum_number_of_OO_iterations = 128,
+                         double OO_convergence_threshold = 1.0e-08);
 };
 
 

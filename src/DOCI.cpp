@@ -324,17 +324,15 @@ void DOCI::calculate2RDMs(){
 /**
  *  Perform Newton-step-based orbital optimization
  */
-void DOCI::orbitalOptimize(numopt::eigenproblem::BaseSolverOptions* solver_options) {
+void DOCI::orbitalOptimize(numopt::eigenproblem::BaseSolverOptions* solver_options_ptr, size_t maximum_number_of_OO_iterations,
+                           double OO_convergence_threshold) {
 
-    size_t number_of_maximum_OO_iterations = 128;
-    double OO_convergence_threshold = 1.0e-08;  // on the norm of the gradient
-    bool is_converged = false;
+    bool is_OO_converged = false;
     size_t OO_iterations = 0;
-    while (!is_converged) {
+    while (!is_OO_converged) {
 
         // Solve the DOCI eigenvalue equation, using the options provided
-        this->solve(solver_options);
-        std::cout << "Current lowest eigenvalue of the Hamiltonian: " << std::setprecision(15) << this->get_lowest_eigenvalue() << std::endl;
+        this->solve(solver_options_ptr);
 
 
         // Calculate the 1- and 2-RDMs
@@ -346,16 +344,15 @@ void DOCI::orbitalOptimize(numopt::eigenproblem::BaseSolverOptions* solver_optio
         Eigen::MatrixXd F = this->so_basis.calculateGeneralizedFockMatrix(this->one_rdm, this->two_rdm);
         Eigen::MatrixXd gradient_matrix = 2 * (F - F.transpose());
         Eigen::VectorXd gradient_vector = cpputil::linalg::strictLowerTriangle(gradient_matrix);  // gradient vector with the free parameters, at kappa = 0
-        std::cout << "'reduced' gradient vector: " << std::endl << gradient_vector << std::endl << std::endl;
 
 
         // If the calculated norm is already zero, we don't have to do any orbital optimization steps
         if (gradient_vector.norm() < OO_convergence_threshold) {
-            is_converged = true;
+            is_OO_converged = true;
         } else {
             OO_iterations++;
 
-            if (OO_iterations >= number_of_maximum_OO_iterations ) {
+            if (OO_iterations >= maximum_number_of_OO_iterations) {
                 throw std::runtime_error("DOCI::orbitalOptimize(): The OO-DOCI procedure failed to converge in the maximum number of allowed iterations.");
             }
         }
@@ -378,7 +375,6 @@ void DOCI::orbitalOptimize(numopt::eigenproblem::BaseSolverOptions* solver_optio
         Eigen::MatrixXd hessian_matrix = cpputil::linalg::strictLowerTriangle(hessian_tensor);  // hessian matrix with only the free parameters, at kappa = 0
 
         Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> hessian_solver (hessian_matrix);
-        std::cout << "Hessian eigenvalues: " << std::endl << hessian_solver.eigenvalues() << std::endl << std::endl;
 
 
         // At this moment, we have calculated the electronic gradient and electronic Hessian at kappa = 0
@@ -393,8 +389,6 @@ void DOCI::orbitalOptimize(numopt::eigenproblem::BaseSolverOptions* solver_optio
         Eigen::MatrixXd kappa_matrix_transpose = kappa_matrix.transpose();  // store the transpose in an auxiliary variable to avoid aliasing issues
         kappa_matrix -= kappa_matrix_transpose;  // fillStrictLowerTriangle only returns the lower triangle, so we must construct the anti-Hermitian (anti-symmetric) matrix
 
-        std::cout << "kappa matrix: " << std::endl << kappa_matrix << std::endl << std::endl;
-
 
         // Calculate the unitary rotation matrix that we can use to rotate the basis
         Eigen::MatrixXd U = (-kappa_matrix).exp();
@@ -404,7 +398,14 @@ void DOCI::orbitalOptimize(numopt::eigenproblem::BaseSolverOptions* solver_optio
         this->so_basis.rotate(U);  // this checks if U is actually unitary
 
 
-        // TODO: if we're doing Davidson diagonalization, the initial guess should be the eigenvector of the old Hamiltonian
+        // If we're using a DavidsonSolver, we should update the the initial guesses to be the current eigenvectors
+        if (solver_options_ptr->get_solver_type() == numopt::eigenproblem::SolverType::DAVIDSON) {
+            auto davidson_solver_options_ptr = dynamic_cast<numopt::eigenproblem::DavidsonSolverOptions*>(solver_options_ptr);  // this now points to the used solver options
+
+            for (size_t i = 0; i < davidson_solver_options_ptr->number_of_required_eigenpairs; i++) {
+                davidson_solver_options_ptr->X_0.col(i) = this->get_eigenpair(i).get_eigenvector();
+            }
+        }
     }  // while not converged
 }
 
