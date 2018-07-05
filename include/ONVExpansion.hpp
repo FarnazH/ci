@@ -34,6 +34,19 @@ private:
     size_t dim;  // the dimension of the expansion
 
 
+    bool are_computed_one_rdms = false;
+    bool are_computed_two_rdms = false;
+
+    Eigen::MatrixXd one_rdm_aa;  // alpha-alpha (a-a) 1-RDM
+    Eigen::MatrixXd one_rdm_bb;  // beta-beta (b-b) 1-RDM
+    Eigen::MatrixXd one_rdm;  // spin-summed (total) 1-RDM
+
+    Eigen::Tensor<double, 4> two_rdm_aaaa;  // a-a-a-a 2-RDM
+    Eigen::Tensor<double, 4> two_rdm_aabb;  // a-a-b-b 2-RDM
+    Eigen::Tensor<double, 4> two_rdm_bbaa;  // b-a-a-b 2-RDM
+    Eigen::Tensor<double, 4> two_rdm_bbbb;  // b-b-b-b 2-RDM
+    Eigen::Tensor<double, 4> two_rdm;  // spin-summed (total) 2-RDM
+
 public:
 
     // CONSTRUCTORS
@@ -210,6 +223,69 @@ public:
      */
     size_t get_dim() const { return this->dim; }
 
+    Eigen::MatrixXd get_one_rdm_aa() const {
+        if (!this->are_computed_one_rdms) {
+            throw std::logic_error("The requested reduced density matrix is not computed yet.");
+        }
+        return this->one_rdm_aa;
+    }
+
+
+    Eigen::MatrixXd get_one_rdm_bb() const {
+        if (!this->are_computed_one_rdms) {
+            throw std::logic_error("The requested reduced density matrix is not computed yet.");
+        }
+        return this-> one_rdm_bb;
+    }
+
+
+    Eigen::MatrixXd get_one_rdm() const {
+        if (!this->are_computed_one_rdms) {
+            throw std::logic_error("The requested reduced density matrix is not computed yet.");
+        }
+        return this-> one_rdm;
+    }
+
+
+    Eigen::Tensor<double, 4> get_two_rdm_aaaa() const {
+        if (!this->are_computed_two_rdms) {
+            throw std::logic_error("The requested reduced density matrix is not computed yet.");
+        }
+        return this->two_rdm_aaaa;
+    }
+
+
+    Eigen::Tensor<double, 4> get_two_rdm_aabb() const {
+        if (!this->are_computed_two_rdms) {
+            throw std::logic_error("The requested reduced density matrix is not computed yet.");
+        }
+        return this->two_rdm_aabb;
+    }
+
+
+    Eigen::Tensor<double, 4> get_two_rdm_bbaa() const {
+        if (!this->are_computed_two_rdms) {
+            throw std::logic_error("The requested reduced density matrix is not computed yet.");
+        }
+        return this->two_rdm_bbaa;
+    }
+
+
+    Eigen::Tensor<double, 4> get_two_rdm_bbbb() const {
+        if (!this->are_computed_two_rdms) {
+            throw std::logic_error("The requested reduced density matrix is not computed yet.");
+        }
+        return this->two_rdm_bbbb;
+    }
+
+
+    Eigen::Tensor<double, 4> get_two_rdm() const {
+        if (!this->are_computed_two_rdms) {
+            throw std::logic_error("The requested reduced density matrix is not computed yet.");
+        }
+        return this->two_rdm;
+    }
+
 
     /*
      *  PUBLIC METHODS
@@ -243,6 +319,89 @@ public:
         // Check if the eigenvectors are equal
         // This is the final check, so we can simplify an if-else construct
         return cpputil::linalg::areEqualEigenvectors(this_coefficients, other_coefficients, tolerance);
+    }
+
+
+
+    /**
+     *  Calculate all the 1-RDMs
+     */
+    void calculate1RDMs() {
+
+        this->one_rdm_aa = Eigen::MatrixXd::Zero(this->K, this->K);
+        this->one_rdm_bb = Eigen::MatrixXd::Zero(this->K, this->K);
+
+
+        for (size_t I = 0; I < this->dim; I++) {  // loop over all addresses (1)
+
+            bmqc::SpinString<T> alpha_I = this->expansion[I].alpha;
+            bmqc::SpinString<T> beta_I = this->expansion[I].beta;
+            double c_I = this->expansion[I].coefficient;
+
+
+            // Calculate the diagonal of the 1-RDMs
+            for (size_t p = 0; p < this->K; p++) {
+
+                if (alpha_I.isOccupied(p)) {
+                    this->one_rdm_aa(p,p) += std::pow(c_I, 2);
+                }
+
+                if (beta_I.isOccupied(p)) {
+                    this->one_rdm_bb(p,p) += std::pow(c_I, 2);
+                }
+            }
+
+
+            // Calculate the off-diagonal elements, by going over all other ONVs
+            for (size_t J = I+1; J < this->dim; J++) {
+
+                bmqc::SpinString<T> alpha_J = this->expansion[J].alpha;
+                bmqc::SpinString<T> beta_J = this->expansion[J].beta;
+                double c_J = this->expansion[J].coefficient;
+
+                // 1 electron excitation in alpha (i.e. 2 differences), 0 in beta
+                if ((alpha_I.countNumberOfDifferences(alpha_J) == 2) && (beta_I.countNumberOfDifferences(beta_J) == 0)) {
+
+                    // Find the orbitals that are different
+                    std::vector<size_t> indices = alpha_I.findDifferences(alpha_J);
+                    size_t p = indices[0];
+                    size_t q = indices[1];
+
+                    // Calculate the total sign, and include it in the RDM contribution
+                    int sign = alpha_I.operatorPhaseFactor(p) * alpha_J.operatorPhaseFactor(q);
+                    this->one_rdm_aa(p,q) += sign * c_I * c_J;
+                    this->one_rdm_aa(q,p) += sign * c_I * c_J;
+                }
+
+
+                // 1 electron excitation in beta, 0 in alpha
+                if ((alpha_I.countNumberOfDifferences(alpha_J) == 0) && (beta_I.countNumberOfDifferences(beta_J) == 2)) {
+
+                    // Find the orbitals that are different
+                    std::vector<size_t> indices = beta_I.findDifferences(beta_J);
+                    size_t p = indices[0];
+                    size_t q = indices[1];
+
+                    // Calculate the total sign, and include it in the RDM contribution
+                    int sign = beta_I.operatorPhaseFactor(p) * beta_J.operatorPhaseFactor(q);
+                    this->one_rdm_bb(p,q) += sign * c_I * c_J;
+                    this->one_rdm_bb(q,p) += sign * c_I * c_J;
+                }
+
+            }  // loop over addresses J > I
+        }  // loop over addresses I
+
+
+        // The total 1-RDM is the sum of the spin components
+        this->one_rdm = this->one_rdm_aa + this->one_rdm_bb;
+        this->are_computed_one_rdms = true;
+    }
+
+    /**
+     *  Calculate all the 2-RDMS
+     */
+    void calculate2RDMs() {
+
     }
 };
 
