@@ -545,7 +545,6 @@ void FCI::calculateDiagonal() {
  */
 FCI::FCI(libwint::SOBasis& so_basis, size_t N_alpha, size_t N_beta) :
         BaseCI(so_basis, ci::FCI::calculateDimension(so_basis.get_K(), N_alpha, N_beta)),
-        K (so_basis.get_K()),
         N_alpha (N_alpha),
         N_beta (N_beta),
         addressing_scheme_alpha (bmqc::AddressingScheme(this->K, this->N_alpha)),

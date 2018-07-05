@@ -2,12 +2,17 @@
 #define CI_ONVEXPANSION_HPP
 
 
-#include "ONVExpansionComponent.hpp"
-
 #include <fstream>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/range/adaptors.hpp>
+
+#include "ONVExpansionComponent.hpp"
+#include "FCI.hpp"
+#include "DOCI.hpp"
+
+#include <cpputil.hpp>
+
 
 
 namespace ci {
@@ -22,9 +27,10 @@ public:
 
     // CONSTRUCTORS
     /**
-     *  Inherit the bracket initializer, see also (https://stackoverflow.com/a/32925226/7930415)
+     *  Inherit the bracket initializer from std::vector, see also (https://stackoverflow.com/a/32925226/7930415)
      */
     using std::vector<ci::ONVExpansionComponent<T>>::vector;
+
 
     /**
      *  Constructor based on a given @param GAMESS_filename
@@ -94,6 +100,104 @@ public:
             // Add an ONVExpansionComponent to the end of this
             this->emplace_back(ci::ONVExpansionComponent<T> {alpha, beta, coefficient});
         }  // while
+    }
+
+
+    /**
+     *  Constructor based on a converged @param FCI calculation
+     */
+    explicit ONVExpansion(const ci::FCI& fci) {
+
+        // Check if the FCI calculation has converged
+        if (!fci.is_solved()) {
+            throw std::invalid_argument("ONVExpansion(): The given FCI instance isn't solved yet.");
+        }
+
+
+        Eigen::VectorXd eigenvector = fci.get_eigenvector();
+
+
+        // Emplace-back this with the alpha-ONVs, beta-ONVs and coefficients
+        // The convention that is used is that the alpha addresses are major, i.e. the beta addresses are contiguous
+        //      I_alpha I_beta = I_alpha * dim_beta + I_beta
+        bmqc::SpinString<T> spin_string_alpha (1, fci.get_K());
+        for (size_t I_alpha = 0; I_alpha < fci.get_dim_alpha(); I_alpha++) {
+            if (I_alpha > 0) {
+                spin_string_alpha.nextPermutation();
+            }
+
+            bmqc::SpinString<T> spin_string_beta (1, fci.get_K());
+            for (size_t I_beta = 0; I_beta < fci.get_dim_beta(); I_beta++) {
+                if (I_beta > 0) {
+                    spin_string_beta.nextPermutation();
+                }
+
+                size_t compound_address = I_alpha * fci.get_dim_beta() + I_beta;
+                double coefficient = eigenvector(compound_address);
+
+                this->emplace_back(ci::ONVExpansionComponent<T> {spin_string_alpha, spin_string_beta, coefficient});
+            }  // I_beta loop
+        }  // I_alpha loop
+    }
+
+
+    /**
+     *  Constructor based on a converged @param DOCI calculation
+     */
+    explicit ONVExpansion(const ci::DOCI& doci) {
+
+        // Check if the DOCI calculation has converged
+        if (!doci.is_solved()) {
+            throw std::invalid_argument("ONVExpansion(): The given DOCI instance isn't solved yet.");
+        }
+
+
+        Eigen::VectorXd eigenvector = doci.get_eigenvector();
+
+
+        // Emplace-back this with the alpha-ONVs, beta-ONVs (which are equal to the alpha-ONVs) and coefficients
+        bmqc::SpinString<T> spin_string (1, doci.get_K());
+        for (size_t I = 0; I < doci.get_dim(); I++) {
+            if (I > 0) {
+                spin_string.nextPermutation();
+            }
+
+            double coefficient = eigenvector(I);
+
+            this->emplace_back(ci::ONVExpansionComponent<T> {spin_string, spin_string, coefficient});
+        }  // loop over all addresses I
+    }
+
+
+    // PUBLIC METHODS
+    /**
+     *  @return if this is equal to @param other, within a given @param tolerance
+     */
+    bool isEqual(const ci::ONVExpansion<T>& other, double tolerance=1.0e-12) const {
+        // Check first on equal dimensions
+        if (this->size() != other.size()) {
+            return false;
+        }
+
+
+        // Check if the SpinStrings are in the same order
+        // In the mean time construct the eigenvector coefficients, so we don't have to loop over the dimension twice
+        Eigen::VectorXd this_coefficients = Eigen::VectorXd::Zero(this->size());
+        Eigen::VectorXd other_coefficients = Eigen::VectorXd::Zero(this->size());
+        for (size_t i = 0; i < this->size(); i++) {
+
+            if (((*this)[i].alpha != other[i].alpha) || ((*this)[i].beta != other[i].beta)) {
+                return false;
+            }
+
+            this_coefficients(i) = (*this)[i].coefficient;
+            other_coefficients(i) = other[i].coefficient;
+        }
+
+
+        // Check if the eigenvectors are equal
+        // This is the final check, so we can simplify an if-else construct
+        return cpputil::linalg::areEqualEigenvectors(this_coefficients, other_coefficients, tolerance);
     }
 };
 

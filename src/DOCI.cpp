@@ -167,7 +167,6 @@ void DOCI::calculateDiagonal() {
  */
 DOCI::DOCI(libwint::SOBasis& so_basis, size_t N) :
     BaseCI(so_basis, this->calculateDimension(so_basis.get_K(), N / 2)),
-    K (so_basis.get_K()),
     N_P (N / 2),
     addressing_scheme (bmqc::AddressingScheme(this->K, this->N_P)) // since in DOCI, alpha==beta, we should make an
                                                                    // addressing scheme with the number of PAIRS.
