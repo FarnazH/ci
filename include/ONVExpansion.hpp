@@ -126,73 +126,75 @@ public:
 
         this->dim = this->expansion.size();
     }
-//
-//
-//    /**
-//     *  Constructor based on a converged @param FCI calculation
-//     */
-//    explicit ONVExpansion(const ci::FCI& fci) {
-//
-//        // Check if the FCI calculation has converged
-//        if (!fci.is_solved()) {
-//            throw std::invalid_argument("ONVExpansion(): The given FCI instance isn't solved yet.");
-//        }
-//
-//
-//        Eigen::VectorXd eigenvector = fci.get_eigenvector();
-//
-//
-//        // Emplace-back this with the alpha-ONVs, beta-ONVs and coefficients
-//        // The convention that is used is that the alpha addresses are major, i.e. the beta addresses are contiguous
-//        //      I_alpha I_beta = I_alpha * dim_beta + I_beta
-//        bmqc::SpinString<T> spin_string_alpha(1, fci.get_K());
-//        for (size_t I_alpha = 0; I_alpha < fci.get_dim_alpha(); I_alpha++) {
-//            if (I_alpha > 0) {
-//                spin_string_alpha.nextPermutation();
-//            }
-//
-//            bmqc::SpinString<T> spin_string_beta(1, fci.get_K());
-//            for (size_t I_beta = 0; I_beta < fci.get_dim_beta(); I_beta++) {
-//                if (I_beta > 0) {
-//                    spin_string_beta.nextPermutation();
-//                }
-//
-//                size_t compound_address = I_alpha * fci.get_dim_beta() + I_beta;
-//                double coefficient = eigenvector(compound_address);
-//
-//                this->expansion.emplace_back(
-//                    ci::ONVExpansionComponent<T>{spin_string_alpha, spin_string_beta, coefficient});
-//            }  // I_beta loop
-//        }  // I_alpha loop
-//    }
-//
-//
-//    /**
-//     *  Constructor based on a converged @param DOCI calculation
-//     */
-//    explicit ONVExpansion(const ci::DOCI& doci) {
-//
-//        // Check if the DOCI calculation has converged
-//        if (!doci.is_solved()) {
-//            throw std::invalid_argument("ONVExpansion(): The given DOCI instance isn't solved yet.");
-//        }
-//
-//
-//        Eigen::VectorXd eigenvector = doci.get_eigenvector();
-//
-//
-//        // Emplace-back this with the alpha-ONVs, beta-ONVs (which are equal to the alpha-ONVs) and coefficients
-//        bmqc::SpinString<T> spin_string(1, doci.get_K());
-//        for (size_t I = 0; I < doci.get_dim(); I++) {
-//            if (I > 0) {
-//                spin_string.nextPermutation();
-//            }
-//
-//            double coefficient = eigenvector(I);
-//
-//            this->expansion.emplace_back(ci::ONVExpansionComponent<T>{spin_string, spin_string, coefficient});
-//        }  // loop over all addresses I
-//    }
+
+
+    /**
+     *  Constructor based on a converged @param FCI calculation
+     */
+    explicit ONVExpansion(const ci::FCI& fci) {
+
+        // Check if the FCI calculation has converged
+        if (!fci.is_solved()) {
+            throw std::invalid_argument("ONVExpansion(): The given FCI instance isn't solved yet.");
+        }
+
+        this->K = fci.get_K();
+        this->dim = fci.get_dim();
+
+        Eigen::VectorXd eigenvector = fci.get_eigenvector();
+
+        // Emplace-back this with the alpha-ONVs, beta-ONVs and coefficients
+        // The convention that is used is that the alpha addresses are major, i.e. the beta addresses are contiguous
+        //      I_alpha I_beta = I_alpha * dim_beta + I_beta
+        bmqc::SpinString<T> spin_string_alpha(1, this->K);
+        for (size_t I_alpha = 0; I_alpha < fci.get_dim_alpha(); I_alpha++) {
+            if (I_alpha > 0) {
+                spin_string_alpha.nextPermutation();
+            }
+
+            bmqc::SpinString<T> spin_string_beta(1, fci.get_K());
+            for (size_t I_beta = 0; I_beta < fci.get_dim_beta(); I_beta++) {
+                if (I_beta > 0) {
+                    spin_string_beta.nextPermutation();
+                }
+
+                size_t compound_address = I_alpha * fci.get_dim_beta() + I_beta;
+                double coefficient = eigenvector(compound_address);
+
+                this->expansion.emplace_back(ci::ONVExpansionComponent<T> {spin_string_alpha, spin_string_beta, coefficient});
+            }  // I_beta loop
+        }  // I_alpha loop
+    }
+
+
+    /**
+     *  Constructor based on a converged @param DOCI calculation
+     */
+    explicit ONVExpansion(const ci::DOCI& doci) {
+
+        // Check if the DOCI calculation has converged
+        if (!doci.is_solved()) {
+            throw std::invalid_argument("ONVExpansion(): The given DOCI instance isn't solved yet.");
+        }
+
+        this->K = doci.get_K();
+        this->dim = doci.get_dim();
+
+        Eigen::VectorXd eigenvector = doci.get_eigenvector();
+
+
+        // Emplace-back this with the alpha-ONVs, beta-ONVs (which are equal to the alpha-ONVs) and coefficients
+        bmqc::SpinString<T> spin_string(1, this->K);
+        for (size_t I = 0; I < doci.get_dim(); I++) {
+            if (I > 0) {
+                spin_string.nextPermutation();
+            }
+
+            double coefficient = eigenvector(I);
+
+            this->expansion.emplace_back(ci::ONVExpansionComponent<T>{spin_string, spin_string, coefficient});
+        }  // loop over all addresses I
+    }
 
 
     /*
