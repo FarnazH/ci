@@ -31,8 +31,6 @@ private:
     const size_t dim_alpha;  // the dimension of the alpha CI space
     const size_t dim_beta;  // the dimension of the beta CI space
 
-    const size_t K;  // number of spatial orbitals
-
     const size_t N_alpha;  // number of alpha electrons
     const size_t N_beta;  // number of beta electrons
 
@@ -104,6 +102,11 @@ public:
 
     // DESTRUCTOR
     ~FCI() override = default;
+
+
+    // GETTERS
+    size_t get_dim_alpha() const { return this->dim_alpha; };
+    size_t get_dim_beta() const { return this->dim_beta; };
 
 
     // STATIC PUBLIC METHODS

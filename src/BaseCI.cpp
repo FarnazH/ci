@@ -38,6 +38,7 @@ namespace ci {
  */
 BaseCI::BaseCI(libwint::SOBasis& so_basis, size_t dim) :
     so_basis (so_basis),
+    K (this->so_basis.get_K()),
     dim (dim),
     diagonal (Eigen::VectorXd::Zero(this->dim))
 {}
