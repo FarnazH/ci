@@ -25,6 +25,31 @@ BOOST_AUTO_TEST_CASE ( constructor_initializer_list ) {
 }
 
 
+BOOST_AUTO_TEST_CASE ( isEqual ) {
+
+    ci::ONVExpansion<unsigned long> expansion1 {{bmqc::SpinString<unsigned long> (1, 3), bmqc::SpinString<unsigned long> (1, 3), 1.0},
+                                                {bmqc::SpinString<unsigned long> (2, 3), bmqc::SpinString<unsigned long> (2, 3), 0.0}};
+
+    ci::ONVExpansion<unsigned long> expansion2 {{bmqc::SpinString<unsigned long> (1, 3), bmqc::SpinString<unsigned long> (1, 3), 1.0},
+                                                {bmqc::SpinString<unsigned long> (2, 3), bmqc::SpinString<unsigned long> (2, 3), 0.0},
+                                                {bmqc::SpinString<unsigned long> (3, 3), bmqc::SpinString<unsigned long> (3, 3), 0.0}};
+
+    ci::ONVExpansion<unsigned long> expansion3 {{bmqc::SpinString<unsigned long> (1, 2), bmqc::SpinString<unsigned long> (1, 2), 1.0},
+                                                {bmqc::SpinString<unsigned long> (2, 2), bmqc::SpinString<unsigned long> (2, 2), 0.0}};
+
+    ci::ONVExpansion<unsigned long> expansion4 {{bmqc::SpinString<unsigned long> (1, 3), bmqc::SpinString<unsigned long> (1, 3), 0.707},
+                                                {bmqc::SpinString<unsigned long> (2, 3), bmqc::SpinString<unsigned long> (2, 3), 0.707}};
+
+    ci::ONVExpansion<unsigned long> expansion5 {{bmqc::SpinString<unsigned long> (1, 3), bmqc::SpinString<unsigned long> (1, 3), -1.0},
+                                                {bmqc::SpinString<unsigned long> (2, 3), bmqc::SpinString<unsigned long> (2, 3), 0.0}};
+
+    BOOST_CHECK(!expansion1.isEqual(expansion2));  // wrong dimension
+    BOOST_CHECK(!expansion1.isEqual(expansion3));  // different SpinStrings
+    BOOST_CHECK(!expansion1.isEqual(expansion4));  // different coefficients
+
+    BOOST_CHECK(expansion1.isEqual(expansion5));  // same eigenvector
+}
+
 
 BOOST_AUTO_TEST_CASE ( constructor_filename ) {
 
@@ -32,13 +57,11 @@ BOOST_AUTO_TEST_CASE ( constructor_filename ) {
     ci::ONVExpansion<unsigned long> ref_expansion {{bmqc::SpinString<unsigned long> (1, 46), bmqc::SpinString<unsigned long> (1, 46), 1.0},
                                                    {bmqc::SpinString<unsigned long> (1, 46), bmqc::SpinString<unsigned long> (2, 46), 0.0}};
 
-//    ci::ONVExpansion<unsigned long> test_expansion ("../tests/reference_data/test_GAMESS_expansion");
-//
-//
-//    // Check if both expansions are considered equal
-//    for (size_t i = 0; i < 2; i++) {
-//        BOOST_CHECK(test_expansion[i].isEqual(ref_expansion[i]));
-//    }
+    ci::ONVExpansion<unsigned long> test_expansion ("../tests/reference_data/test_GAMESS_expansion");
+
+
+    // Check if both expansions are considered equal
+    BOOST_CHECK(ref_expansion.isEqual(test_expansion, 1.0e-06));
 }
 
 
