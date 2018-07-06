@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE "ONVExpansionComponent_test"
+#define BOOST_TEST_MODULE "ONVExpansionComponent_unsigned_test"
 
 
 #include "ONVExpansionComponent.hpp"
@@ -10,7 +10,7 @@
 
 
 
-BOOST_AUTO_TEST_CASE ( isEqual ) {
+BOOST_AUTO_TEST_CASE ( isEqual_unsigned ) {
 
     bmqc::SpinString<unsigned long> a1 (1, 2);  // "01"
     bmqc::SpinString<unsigned long> b1 (1, 2);  // "01"
