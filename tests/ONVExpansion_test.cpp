@@ -173,13 +173,13 @@ BOOST_AUTO_TEST_CASE ( one_rdms_fci_H2_6_31G ) {
 }
 
 
-BOOST_AUTO_TEST_CASE ( two_rdms_implementing ) {
+BOOST_AUTO_TEST_CASE ( two_rdms_fci_H2_6_31G ) {
 
     // Do an H2@FCI//STO-3G calculation
 
     // Prepare the AO basis
     libwint::Molecule h2 ("../tests/reference_data/h2.xyz");
-    libwint::AOBasis ao_basis (h2, "STO-3G");
+    libwint::AOBasis ao_basis (h2, "6-31G");
     ao_basis.calculateIntegrals();
 
     // Prepare the SO basis from RHF coefficients
@@ -200,12 +200,8 @@ BOOST_AUTO_TEST_CASE ( two_rdms_implementing ) {
     Eigen::Tensor<double, 4> ref_two_rdm = fci.get_two_rdm();
 
 
-    // Create a reference expansion
-    ci::ONVExpansion<unsigned long> expansion {{bmqc::SpinString<unsigned long> (1, 2), bmqc::SpinString<unsigned long> (1, 2), -0.993601},
-                                               {bmqc::SpinString<unsigned long> (1, 2), bmqc::SpinString<unsigned long> (2, 2), -2.40468e-16},
-                                               {bmqc::SpinString<unsigned long> (2, 2), bmqc::SpinString<unsigned long> (1, 2), -3.04909e-16},
-                                               {bmqc::SpinString<unsigned long> (2, 2), bmqc::SpinString<unsigned long> (2, 2), 0.112949}};
-
+    // Read in the FCI expansion into an ONVExpansion, and calculate the 1-RDM
+    ci::ONVExpansion<unsigned long> expansion (fci);
 
     expansion.calculate2RDMs();
     Eigen::Tensor<double, 4> test_two_rdm_aaaa = expansion.get_two_rdm_aaaa();
@@ -213,6 +209,7 @@ BOOST_AUTO_TEST_CASE ( two_rdms_implementing ) {
     Eigen::Tensor<double, 4> test_two_rdm_bbaa = expansion.get_two_rdm_bbaa();
     Eigen::Tensor<double, 4> test_two_rdm_bbbb = expansion.get_two_rdm_bbbb();
     Eigen::Tensor<double, 4> test_two_rdm = expansion.get_two_rdm();
+
 
 
     BOOST_CHECK(cpputil::linalg::areEqual(test_two_rdm_aaaa, ref_two_rdm_aaaa, 1.0e-06));
