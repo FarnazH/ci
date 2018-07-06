@@ -215,12 +215,6 @@ BOOST_AUTO_TEST_CASE ( two_rdms_implementing ) {
     Eigen::Tensor<double, 4> test_two_rdm = expansion.get_two_rdm();
 
 
-
-
-    std::cout << ref_two_rdm_aabb << std::endl << std::endl;
-    std::cout << test_two_rdm_aabb << std::endl << std::endl;
-
-
     BOOST_CHECK(cpputil::linalg::areEqual(test_two_rdm_aaaa, ref_two_rdm_aaaa, 1.0e-06));
     BOOST_CHECK(cpputil::linalg::areEqual(test_two_rdm_aabb, ref_two_rdm_aabb, 1.0e-06));
     BOOST_CHECK(cpputil::linalg::areEqual(test_two_rdm_bbaa, ref_two_rdm_bbaa, 1.0e-06));
