@@ -94,8 +94,36 @@ public:
 
     // GETTERS
     size_t get_dim() const { return this->dim; }
+    Eigen::VectorXd get_diagonal() const { return this->diagonal; }
+
+    // GETTERS - EIGENPAIR
+    std::vector<numopt::eigenproblem::Eigenpair> get_eigenpairs() const { return this->eigensolver_ptr->get_eigenpairs(); }
+
+    numopt::eigenproblem::Eigenpair get_lowest_eigenpair() const { return this->eigensolver_ptr->get_lowest_eigenpair(); }
+    /**
+     *  Return the i-th lowest eigenpair
+     */
+    numopt::eigenproblem::Eigenpair get_eigenpair(size_t i) const { return this->eigensolver_ptr->get_eigenpair(i); }
+
+    // GETTERS - EIGENVALUE
+    double get_lowest_eigenvalue() const { return this->eigensolver_ptr->get_lowest_eigenvalue(); }
+    /**
+     *  Special shortcut getter for the lowest eigenvalue: will be deprecated in the next major release
+     */
     double get_eigenvalue() const { return this->eigensolver_ptr->get_eigenvalue(); }
+
+    // GETTERS - EIGENVECTOR
+    Eigen::VectorXd get_lowest_eigenvector() const { return this->eigensolver_ptr->get_lowest_eigenvector(); }
+    double get_lowest_eigenvector(size_t index) const { return this->eigensolver_ptr->get_lowest_eigenvector(index); }
+    /**
+     *  Special shortcut getter for the eigenvector corresponding to the lowest eigenvalue: will be deprecated in the next major release
+     */
     Eigen::VectorXd get_eigenvector() const { return this->eigensolver_ptr->get_eigenvector(); }
+    /**
+     *  Special shortcut getter for the value at @param index of the eigenvector corresponding to the lowest eigenvalue: will be deprecated in the next major release
+     */
+    double get_eigenvector(size_t index) const { return this->eigensolver_ptr->get_eigenvector(index); }
+
 
     Eigen::MatrixXd get_one_rdm_aa() const;
     Eigen::MatrixXd get_one_rdm_bb() const;
@@ -110,9 +138,9 @@ public:
 
     // PUBLIC METHODS
     /**
-     *  Find the lowest energy eigenpair of the Hamiltonian, using a @param solver_type.
+     *  Providing a @param solver_options_ptr, find (the) lowest energy eigenpair(s) of the Hamiltonian
      */
-    void solve(numopt::eigenproblem::SolverType solver_type);
+    void solve(numopt::eigenproblem::BaseSolverOptions* solver_options_ptr);
 
     /**
      *  Calculate all the 1-RDMs.

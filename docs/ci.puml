@@ -149,18 +149,26 @@ namespace ci {
             {abstract} virtual **~BaseCI**()
         __ public methods __
             + size_t **get_dim**() const
+            + std::vector<numopt::eigenproblem::Eigenpair> **get_eigenpairs**() const
+            + numopt::eigenproblem::Eigenpair **get_lowest_eigenpair**() const
+            + numopt::eigenproblem::Eigenpair **get_eigenpair**(size_t i) const
+            + double **get_lowest_eigenvalue**() const
             + double **get_eigenvalue**() const
+            + Eigen::VectorXd **get_lowest_eigenvector**() const
+            + double **get_lowest_eigenvector**(size_t index) const
             + Eigen::VectorXd **get_eigenvector**() const
-            + Eigen::MatrixXd get_one_rdm_aa() const
-            + Eigen::MatrixXd get_one_rdm_bb() const
-            + Eigen::Tensor<double, 4> get_two_rdm_aaaa() const
-            + Eigen::Tensor<double, 4> get_two_rdm_aabb() const
-            + Eigen::Tensor<double, 4> get_two_rdm_bbaa() const
-            + Eigen::Tensor<double, 4> get_two_rdm_bbbb() const
+            + double **get_eigenvector**(size_t index) const
 
-            + void **solve**(ci::solver::SolverType solver_type)
-            + {abstract} virtual void compute1RDM()=0
-            + {abstract} virtual void compute2RDM()=0
+            + Eigen::MatrixXd **get_one_rdm_aa**() const
+            + Eigen::MatrixXd **get_one_rdm_bb**() const
+            + Eigen::Tensor<double, 4> **get_two_rdm_aaaa**() const
+            + Eigen::Tensor<double, 4> **get_two_rdm_aabb**() const
+            + Eigen::Tensor<double, 4> **get_two_rdm_bbaa**() const
+            + Eigen::Tensor<double, 4> **get_two_rdm_bbbb**() const
+
+            + void solve(numopt::eigenproblem::BaseSolverOptions* solver_options_ptr)
+            + {abstract} virtual void **compute1RDM**()=0
+            + {abstract} virtual void **compute2RDM**()=0
     }
     ci.BaseCI *--> numopt.eigenproblem.BaseEigenproblemSolver
     ci.BaseCI *--> bmqc.SpinString
@@ -186,6 +194,8 @@ namespace ci {
             + {static} **calculateDimension**(size_t K, size_t N_P)
             + void **calculate1RDMs**() override
             + void **calculate2RDMs**() override
+
+            + void **orbitalOptimize**()
     }
 
     ci.FCI --|> ci.BaseCI

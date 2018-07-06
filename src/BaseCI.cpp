@@ -22,6 +22,8 @@
 #include "SparseSolver.hpp"
 
 
+#include <iomanip>
+
 
 namespace ci {
 
@@ -74,19 +76,20 @@ BaseCI::~BaseCI() {
  */
 
 /**
- *  Find the lowest energy eigenpair of the Hamiltonian, using a @param solver_type.
+ *  Providing a @param solver_options_ptr, find (the) lowest energy eigenpair(s) of the Hamiltonian
  */
-void BaseCI::solve(numopt::eigenproblem::SolverType solver_type) {
+void BaseCI::solve(numopt::eigenproblem::BaseSolverOptions* solver_options_ptr) {
 
-    // Before solving anything, we should calculate the diagonal
+    // The diagonal should be recalculated every time solve is called, since this->so_basis can have changed in between
+    // subsequent diagonalization calls
     this->calculateDiagonal();
 
 
     // Depending on how the user wants to solve the eigenvalue problem, construct the appropriate solver
-    switch (solver_type) {
+    switch (solver_options_ptr->get_solver_type()) {
 
         case numopt::eigenproblem::SolverType::DENSE: {
-            auto dense_solver = new numopt::eigenproblem::DenseSolver(this->dim);
+            auto dense_solver = new numopt::eigenproblem::DenseSolver(this->dim);  // deleted in the destructor
             this->solveMatrixEigenvalueProblem(dense_solver);
             this->eigensolver_ptr = dense_solver;  // prevent data from going out of scope
                                                    // we are only assigning this->eigensolver_ptr now, because
@@ -95,7 +98,7 @@ void BaseCI::solve(numopt::eigenproblem::SolverType solver_type) {
         }
 
         case numopt::eigenproblem::SolverType::SPARSE: {
-            auto sparse_solver = new numopt::eigenproblem::SparseSolver(this->dim);
+            auto sparse_solver = new numopt::eigenproblem::SparseSolver(this->dim);  // deleted in the destructor
             this->solveMatrixEigenvalueProblem(sparse_solver);
             this->eigensolver_ptr = sparse_solver;  // prevent data from going out of scope
                                                     // we are only assigning this->eigensolver_ptr now, because
@@ -105,22 +108,16 @@ void BaseCI::solve(numopt::eigenproblem::SolverType solver_type) {
 
         case numopt::eigenproblem::SolverType::DAVIDSON: {
 
-            numopt::VectorFunction matrixVectorProduct = [this] (const Eigen::VectorXd& x) { return this->matrixVectorProduct(x); };
+            numopt::VectorFunction matrixVectorProduct = [this](const Eigen::VectorXd& x) { return this->matrixVectorProduct(x); };
 
-            // HARTREE-FOCK INITIAL GUESS
-            Eigen::VectorXd t_0 = Eigen::VectorXd::Zero(this->dim);
-            t_0(0) = 1;  // in lexical notation, the Hartree-Fock determinant has the lowest address
+            // Dynamic-cast to the derived pointer type, to be able to access X_0 (the initial guess(es))
+            auto davidson_solver_options_ptr = dynamic_cast<numopt::eigenproblem::DavidsonSolverOptions*> (solver_options_ptr);  // it's OK if this pointer goes out of scope, we still have solver_options_ptr that's pointing to it
 
-            // RANDOM INITIAL GUESS
-//            Eigen::VectorXd t_0 = Eigen::VectorXd::Random(this->dim);
-
-            this->eigensolver_ptr = new numopt::eigenproblem::DavidsonSolver(matrixVectorProduct, this->diagonal, t_0);  // the diagonal has been calculated in the beginning of this method
+            this->eigensolver_ptr = new numopt::eigenproblem::DavidsonSolver(matrixVectorProduct, this->diagonal, davidson_solver_options_ptr->X_0);  // deleted in the destructor
             this->eigensolver_ptr->solve();
             break;
         }
-
     }
-
 }
 
 
