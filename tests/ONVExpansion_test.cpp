@@ -362,10 +362,6 @@ BOOST_AUTO_TEST_CASE ( one_rdms_fci_H2O_STO_3G ) {
     // Read in the FCI expansion into an ONVExpansion, and calculate the 1-RDMs
     ci::ONVExpansion<unsigned long> expansion (fci);
 
-    for (size_t i = 0; i < expansion.get_dim(); i++) {
-        std::cout << expansion[i].alpha.get_representation() << ' ' << expansion[i].beta.get_representation() << std::endl;
-    }
-
     expansion.calculate1RDMs();
 
     Eigen::MatrixXd test_one_rdm_aa = expansion.get_one_rdm_aa();
