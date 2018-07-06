@@ -199,7 +199,7 @@ public:
 
 
         // Emplace-back this with the alpha-ONVs, beta-ONVs (which are equal to the alpha-ONVs) and coefficients
-        bmqc::SpinString<T> spin_string(1, this->K);
+        bmqc::SpinString<T> spin_string(0, doci.get_addressing_scheme());
         for (size_t I = 0; I < doci.get_dim(); I++) {
             if (I > 0) {
                 spin_string.nextPermutation();
