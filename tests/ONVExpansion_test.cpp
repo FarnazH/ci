@@ -123,55 +123,50 @@ BOOST_AUTO_TEST_CASE ( constructor_fci_four_electrons ) {
     // Create the reference expansion (constructing the ONVExpansion manually from the FCI calculation)
     ci::ONVExpansion<unsigned long> ref_expansion {{bmqc::SpinString<unsigned long> (3, 4), bmqc::SpinString<unsigned long> (3, 4), -0.984527},
                                                    {bmqc::SpinString<unsigned long> (3, 4), bmqc::SpinString<unsigned long> (5, 4), -1.5665e-15},
-                                                   {bmqc::SpinString<unsigned long> (3, 4), bmqc::SpinString<unsigned long> (9, 4), 0.103568},
-                                                   {bmqc::SpinString<unsigned long> (3, 4), bmqc::SpinString<unsigned long> (6, 4), -0.0267219},
+                                                   {bmqc::SpinString<unsigned long> (3, 4), bmqc::SpinString<unsigned long> (6, 4), 0.103568},
+                                                   {bmqc::SpinString<unsigned long> (3, 4), bmqc::SpinString<unsigned long> (9, 4), -0.0267219},
                                                    {bmqc::SpinString<unsigned long> (3, 4), bmqc::SpinString<unsigned long> (10, 4), 2.65415e-17},
                                                    {bmqc::SpinString<unsigned long> (3, 4), bmqc::SpinString<unsigned long> (12, 4), 0.0166314},
 
                                                    {bmqc::SpinString<unsigned long> (5, 4), bmqc::SpinString<unsigned long> (3, 4), -1.19959e-15},
                                                    {bmqc::SpinString<unsigned long> (5, 4), bmqc::SpinString<unsigned long> (5, 4), 0.0274075},
-                                                   {bmqc::SpinString<unsigned long> (5, 4), bmqc::SpinString<unsigned long> (9, 4), 5.68127e-17},
-                                                   {bmqc::SpinString<unsigned long> (5, 4), bmqc::SpinString<unsigned long> (6, 4), 5.33411e-17},
+                                                   {bmqc::SpinString<unsigned long> (5, 4), bmqc::SpinString<unsigned long> (6, 4), 5.68127e-17},
+                                                   {bmqc::SpinString<unsigned long> (5, 4), bmqc::SpinString<unsigned long> (9, 4), 5.33411e-17},
                                                    {bmqc::SpinString<unsigned long> (5, 4), bmqc::SpinString<unsigned long> (10, 4), -0.0147791},
                                                    {bmqc::SpinString<unsigned long> (5, 4), bmqc::SpinString<unsigned long> (12, 4), 2.61811e-17},
 
-                                                   {bmqc::SpinString<unsigned long> (9, 4), bmqc::SpinString<unsigned long> (3, 4), 0.103568},
-                                                   {bmqc::SpinString<unsigned long> (9, 4), bmqc::SpinString<unsigned long> (5, 4), 1.85374e-16},
-                                                   {bmqc::SpinString<unsigned long> (9, 4), bmqc::SpinString<unsigned long> (9, 4), 0.046555},
-                                                   {bmqc::SpinString<unsigned long> (9, 4), bmqc::SpinString<unsigned long> (6, 4), -0.0314105},
-                                                   {bmqc::SpinString<unsigned long> (9, 4), bmqc::SpinString<unsigned long> (10, 4), 6.51894e-17},
-                                                   {bmqc::SpinString<unsigned long> (9, 4), bmqc::SpinString<unsigned long> (12, 4), -0.00771233},
-
-                                                   {bmqc::SpinString<unsigned long> (6, 4), bmqc::SpinString<unsigned long> (3, 4), -0.0267219},
-                                                   {bmqc::SpinString<unsigned long> (6, 4), bmqc::SpinString<unsigned long> (5, 4), -1.64427e-16},
+                                                   {bmqc::SpinString<unsigned long> (6, 4), bmqc::SpinString<unsigned long> (3, 4), 0.103568},
+                                                   {bmqc::SpinString<unsigned long> (6, 4), bmqc::SpinString<unsigned long> (5, 4), 1.85374e-16},
+                                                   {bmqc::SpinString<unsigned long> (6, 4), bmqc::SpinString<unsigned long> (6, 4), 0.046555},
                                                    {bmqc::SpinString<unsigned long> (6, 4), bmqc::SpinString<unsigned long> (9, 4), -0.0314105},
-                                                   {bmqc::SpinString<unsigned long> (6, 4), bmqc::SpinString<unsigned long> (6, 4), 0.0202616},
-                                                   {bmqc::SpinString<unsigned long> (6, 4), bmqc::SpinString<unsigned long> (10, 4), 7.20922e-18},
-                                                   {bmqc::SpinString<unsigned long> (6, 4), bmqc::SpinString<unsigned long> (12, 4), 0.00564933},
+                                                   {bmqc::SpinString<unsigned long> (6, 4), bmqc::SpinString<unsigned long> (10, 4), 6.51894e-17},
+                                                   {bmqc::SpinString<unsigned long> (6, 4), bmqc::SpinString<unsigned long> (12, 4), -0.00771233},
+
+                                                   {bmqc::SpinString<unsigned long> (9, 4), bmqc::SpinString<unsigned long> (3, 4), -0.0267219},
+                                                   {bmqc::SpinString<unsigned long> (9, 4), bmqc::SpinString<unsigned long> (5, 4), -1.64427e-16},
+                                                   {bmqc::SpinString<unsigned long> (9, 4), bmqc::SpinString<unsigned long> (6, 4), -0.0314105},
+                                                   {bmqc::SpinString<unsigned long> (9, 4), bmqc::SpinString<unsigned long> (9, 4), 0.0202616},
+                                                   {bmqc::SpinString<unsigned long> (9, 4), bmqc::SpinString<unsigned long> (10, 4), 7.20922e-18},
+                                                   {bmqc::SpinString<unsigned long> (9, 4), bmqc::SpinString<unsigned long> (12, 4), 0.00564933},
 
                                                    {bmqc::SpinString<unsigned long> (10, 4), bmqc::SpinString<unsigned long> (3, 4), -1.60053e-16},
                                                    {bmqc::SpinString<unsigned long> (10, 4), bmqc::SpinString<unsigned long> (5, 4), -0.0147791},
-                                                   {bmqc::SpinString<unsigned long> (10, 4), bmqc::SpinString<unsigned long> (9, 4), 1.11285e-16},
-                                                   {bmqc::SpinString<unsigned long> (10, 4), bmqc::SpinString<unsigned long> (6, 4), 8.69277e-18},
+                                                   {bmqc::SpinString<unsigned long> (10, 4), bmqc::SpinString<unsigned long> (6, 4), 1.11285e-16},
+                                                   {bmqc::SpinString<unsigned long> (10, 4), bmqc::SpinString<unsigned long> (9, 4), 8.69277e-18},
                                                    {bmqc::SpinString<unsigned long> (10, 4), bmqc::SpinString<unsigned long> (10, 4), 0.036638},
                                                    {bmqc::SpinString<unsigned long> (10, 4), bmqc::SpinString<unsigned long> (12, 4), 6.48637e-17},
 
                                                    {bmqc::SpinString<unsigned long> (12, 4), bmqc::SpinString<unsigned long> (3, 4), 0.0166314},
                                                    {bmqc::SpinString<unsigned long> (12, 4), bmqc::SpinString<unsigned long> (5, 4), -7.09468e-19},
-                                                   {bmqc::SpinString<unsigned long> (12, 4), bmqc::SpinString<unsigned long> (9, 4), -0.00771233},
-                                                   {bmqc::SpinString<unsigned long> (12, 4), bmqc::SpinString<unsigned long> (6, 4), 0.00564933},
+                                                   {bmqc::SpinString<unsigned long> (12, 4), bmqc::SpinString<unsigned long> (6, 4), -0.00771233},
+                                                   {bmqc::SpinString<unsigned long> (12, 4), bmqc::SpinString<unsigned long> (9, 4), 0.00564933},
                                                    {bmqc::SpinString<unsigned long> (12, 4), bmqc::SpinString<unsigned long> (10, 4), 3.89442e-17},
-                                                   {bmqc::SpinString<unsigned long> (12, 4), bmqc::SpinString<unsigned long> (12, 4), -0.00291466},
+                                                   {bmqc::SpinString<unsigned long> (12, 4), bmqc::SpinString<unsigned long> (12, 4), -0.00291466}
     };
 
 
-    std::cout << ref_expansion << std::endl;
-
     // Create the test expansion
     ci::ONVExpansion<unsigned long> test_expansion (fci);
-
-
-    std::cout << test_expansion << std::endl;
 
 
     BOOST_CHECK(test_expansion.isEqual(ref_expansion, 1.0e-06));

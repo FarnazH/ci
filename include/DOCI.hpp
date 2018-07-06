@@ -67,6 +67,10 @@ public:
     ~DOCI() override = default;
 
 
+    // GETTERS
+    bmqc::AddressingScheme get_addressing_scheme() const { return this->addressing_scheme; }
+
+
     // STATIC PUBLIC METHODS
     /**
      *  Given a number of spatial orbitals @param K and a number of electron pairs @param N_P, @return the dimension of
