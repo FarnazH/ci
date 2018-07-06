@@ -333,20 +333,6 @@ void DOCI::orbitalOptimize(numopt::eigenproblem::BaseSolverOptions* solver_optio
 
         // Solve the DOCI eigenvalue equation, using the options provided
         this->solve(solver_options_ptr);
-//        std::cout << "current lowest eigenvalue: " << this->get_eigenvalue() << std::endl;
-
-        Eigen::VectorXd lowest_eigenvector = this->get_lowest_eigenvector();
-        Eigen::ArrayXd coefficients_squared = lowest_eigenvector.array().square();
-        Eigen::ArrayXd log_coefficients_squared = coefficients_squared.log();
-
-
-
-        double I_C = - 1 / std::log(2) * (coefficients_squared * log_coefficients_squared).sum();
-
-        std::cout << "Current eigenvector of the DOCI Hamiltonian: " << std::endl << lowest_eigenvector << std::endl << std::endl;
-        std::cout << "Shannon entropy of the lowest eigenvector: " << I_C << std::endl;
-
-
 
 
         // Calculate the 1- and 2-RDMs
@@ -377,7 +363,6 @@ void DOCI::orbitalOptimize(numopt::eigenproblem::BaseSolverOptions* solver_optio
         Eigen::MatrixXd hessian_matrix = cpputil::linalg::strictLowerTriangle(hessian_tensor);  // hessian matrix with only the free parameters, at kappa = 0
 
         Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> hessian_solver (hessian_matrix);
-//        std::cout << "hessian eigenvalues:" << std::endl << hessian_solver.eigenvalues() << std::endl << std::endl;
 
 
         // At this moment, we have calculated the electronic gradient and electronic Hessian at kappa = 0
@@ -410,7 +395,6 @@ void DOCI::orbitalOptimize(numopt::eigenproblem::BaseSolverOptions* solver_optio
 
 
         // Change kappa back to a matrix
-//        std::cout << "kappa_vector" << std::endl << kappa_vector << std::endl << std::endl;
         Eigen::MatrixXd kappa_matrix = cpputil::linalg::fillStrictLowerTriangle(kappa_vector);  // containing all parameters, so this is in anti-Hermitian (anti-symmetric) form
         Eigen::MatrixXd kappa_matrix_transpose = kappa_matrix.transpose();  // store the transpose in an auxiliary variable to avoid aliasing issues
         kappa_matrix -= kappa_matrix_transpose;  // fillStrictLowerTriangle only returns the lower triangle, so we must construct the anti-Hermitian (anti-symmetric) matrix
