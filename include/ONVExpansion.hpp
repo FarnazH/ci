@@ -419,6 +419,7 @@ public:
 
             for (size_t p = 0; p < this->K; p++) {
 
+                // 'Diagonal' elements of the 2-RDM: aaaa and aabb
                 if (alpha_I.isOccupied(p)) {
                     for (size_t q = 0; q < this->K; q++) {
                         if (p == q) {  // can't create/annihilate the same orbital twice
@@ -426,16 +427,17 @@ public:
                         }
 
                         if (beta_I.isOccupied(q)) {
-                            this->two_rdm_aabb(p,q,q,p) += std::pow(c_I, 2);
+                            this->two_rdm_aabb(p,p,q,q) += std::pow(c_I, 2);
                         } else {
                             if (alpha_I.isOccupied(q)) {
-                                this->two_rdm_aaaa(p,q,q,p) += std::pow(c_I, 2);
-                                this->two_rdm_aaaa(p,p,q,q) -= std::pow(c_I, 2);
+                                this->two_rdm_aaaa(p,p,q,q) += std::pow(c_I, 2);
+                                this->two_rdm_aaaa(p,q,q,p) -= std::pow(c_I, 2);
                             }
                         }
-                    }
+                    }  // loop over q
                 }
 
+                // 'Diagonal' elements of the 2-RDM: bbbb and bbaa
                 if (beta_I.isOccupied(p)) {
                     for (size_t q = 0; q < this->K; q++) {
                         if (p == q) {  // can't create/annihilate the same orbital twice
@@ -443,16 +445,16 @@ public:
                         }
 
                         if (alpha_I.isOccupied(q)) {
-                            this->two_rdm_bbaa(p,q,q,p) += std::pow(c_I, 2);
+                            this->two_rdm_bbaa(p,p,q,q) += std::pow(c_I, 2);
                         } else {
                             if (beta_I.isOccupied(q)) {
-                                this->two_rdm_bbbb(p,q,q,p) += std::pow(c_I, 2);
-                                this->two_rdm_aaaa(p,p,q,q) -= std::pow(c_I, 2);
+                                this->two_rdm_bbbb(p,p,q,q) += std::pow(c_I, 2);
+                                this->two_rdm_bbbb(p,q,q,p) -= std::pow(c_I, 2);
                             }
                         }
-                    }
+                    }  // loop over q
                 }
-            }
+            }  // loop over q
 
 
             for (size_t J = I+1; J < this->dim; J++) {
@@ -465,44 +467,170 @@ public:
                 // 1 electron excitation in alpha, 0 in beta
                 if ((alpha_I.countNumberOfDifferences(alpha_J) == 2) && (beta_I.countNumberOfDifferences(beta_J) == 0)) {
 
-                    // Find the orbitals that are different
-                    std::vector<size_t> indices = alpha_I.findDifferences(alpha_J);
-                    size_t p = indices[0];
-                    size_t q = indices[1];
+                    // Find the orbitals that are occupied in one string, and aren't in the other
+                    size_t p = alpha_I.findOccupiedDifferences(alpha_J)[0];  // we're sure that there is only 1 element in the std::vector<size_t>
+                    size_t q = alpha_J.findOccupiedDifferences(alpha_I)[0];  // we're sure that there is only 1 element in the std::vector<size_t>
 
-                    for (size_t r = 0; r < this->K; r++) {
+                    // Calculate the total sign
+                    int sign = alpha_I.operatorPhaseFactor(p) * alpha_J.operatorPhaseFactor(q);
 
-                        // Calculate the total sign, and include it in the RDM contribution
-                        int sign = alpha_I.operatorPhaseFactor(p) * alpha_J.operatorPhaseFactor(q);
-                        this->two_rdm_aaaa(p,r,r,q) += sign * c_I * c_J;
-                        this->two_rdm_aaaa(p,q,r,r) -= sign * c_I * c_J;
-                        this->two_rdm_aaaa(r,r,p,q) += sign * c_I * c_J;
+
+                    for (size_t r = 0; r < this->K; r++) {  // r loops over spatial orbitals
+
+                        if (alpha_I.isOccupied(r) && alpha_J.isOccupied(r)) {  // r must be occupied on the left and on the right
+                            if ((p == r) || (q == r)) {  // can't create or annihilate the same orbital
+                                continue;
+                            }
+
+                            // Fill in the 2-RDM contributions
+                            this->two_rdm_aaaa(p,q,r,r) += sign * c_I * c_J;
+                            this->two_rdm_aaaa(r,q,p,r) -= sign * c_I * c_J;
+                            this->two_rdm_aaaa(p,r,r,q) -= sign * c_I * c_J;
+                            this->two_rdm_aaaa(r,r,p,q) += sign * c_I * c_J;
+
+                            this->two_rdm_aaaa(q,p,r,r) += sign * c_I * c_J;
+                            this->two_rdm_aaaa(q,r,r,p) -= sign * c_I * c_J;
+                            this->two_rdm_aaaa(r,p,q,r) -= sign * c_I * c_J;
+                            this->two_rdm_aaaa(r,r,q,p) += sign * c_I * c_J;
+                        }
+
+                        if (beta_I.isOccupied(r)) {  // beta_I == beta_J from the previous if-branch
+
+                            // Fill in the 2-RDM contributions
+                            this->two_rdm_aabb(p,q,r,r) += sign * c_I * c_J;
+                            this->two_rdm_aabb(q,p,r,r) += sign * c_I * c_J;
+
+                            this->two_rdm_bbaa(r,r,p,q) += sign * c_I * c_J;
+                            this->two_rdm_bbaa(r,r,q,p) += sign * c_I * c_J;
+                        }
                     }
                 }
 
+
+                // 0 electron excitations in alpha, 1 in beta
+                if ((alpha_I.countNumberOfDifferences(alpha_J) == 0) && (beta_I.countNumberOfDifferences(beta_J) == 1)) {
+
+                    // Find the orbitals that are occupied in one string, and aren't in the other
+                    size_t p = beta_I.findOccupiedDifferences(beta_J)[0];  // we're sure that there is only 1 element in the std::vector<size_t>
+                    size_t q = beta_J.findOccupiedDifferences(beta_I)[0];  // we're sure that there is only 1 element in the std::vector<size_t>
+
+                    // Calculate the total sign
+                    int sign = beta_I.operatorPhaseFactor(p) * beta_J.operatorPhaseFactor(q);
+
+
+                    for (size_t r = 0; r < this->K; r++) {  // r loops over spatial orbitals
+
+                        if (beta_I.isOccupied(r) && beta_J.isOccupied(r)) {  // r must be occupied on the left and on the right
+                            if ((p == r) || (q == r)) {  // can't create or annihilate the same orbital
+                                continue;
+                            }
+
+                            // Fill in the 2-RDM contributions
+                            this->two_rdm_bbbb(p,q,r,r) += sign * c_I * c_J;
+                            this->two_rdm_bbbb(r,q,p,r) -= sign * c_I * c_J;
+                            this->two_rdm_bbbb(p,r,r,q) -= sign * c_I * c_J;
+                            this->two_rdm_bbbb(r,r,p,q) += sign * c_I * c_J;
+
+                            this->two_rdm_bbbb(q,p,r,r) += sign * c_I * c_J;
+                            this->two_rdm_bbbb(q,r,r,p) -= sign * c_I * c_J;
+                            this->two_rdm_bbbb(r,p,q,r) -= sign * c_I * c_J;
+                            this->two_rdm_bbbb(r,r,q,p) += sign * c_I * c_J;
+                        }
+
+                        if (alpha_I.isOccupied(r)) {  // alpha_I == alpha_J from the previous if-branch
+
+                            // Fill in the 2-RDM contributions
+                            this->two_rdm_bbaa(p,q,r,r) += sign * c_I * c_J;
+                            this->two_rdm_bbaa(q,p,r,r) += sign * c_I * c_J;
+
+                            this->two_rdm_aabb(r,r,p,q) += sign * c_I * c_J;
+                            this->two_rdm_aabb(r,r,q,p) += sign * c_I * c_J;
+                        }
+                    }
+                }
+
+
+                // 1 electron excitation in alpha, 1 in beta
+                if ((alpha_I.countNumberOfDifferences(alpha_J) == 2) && (beta_I.countNumberOfDifferences(beta_J) == 2)) {
+
+                    // Find the orbitals that are occupied in one string, and aren't in the other
+                    size_t p = alpha_I.findOccupiedDifferences(alpha_J)[0];  // we're sure that there is only 1 element in the std::vector<size_t>
+                    size_t q = alpha_J.findOccupiedDifferences(alpha_I)[0];  // we're sure that there is only 1 element in the std::vector<size_t>
+
+                    size_t r = beta_I.findOccupiedDifferences(beta_J)[0];  // we're sure that there is only 1 element in the std::vector<size_t>
+                    size_t s = beta_J.findOccupiedDifferences(beta_I)[0];  // we're sure that there is only 1 element in the std::vector<size_t>
+
+                    // Calculate the total sign, and include it in the 2-RDM contribution
+                    int sign = alpha_I.operatorPhaseFactor(p) * alpha_J.operatorPhaseFactor(q) * beta_I.operatorPhaseFactor(r) * beta_J.operatorPhaseFactor(s);
+                    this->two_rdm_aabb(p,q,r,s) += sign * c_I * c_J;
+                    this->two_rdm_aabb(q,p,s,r) += sign * c_I * c_J;
+
+                    this->two_rdm_bbaa(r,s,p,q) += sign * c_I * c_J;
+                    this->two_rdm_bbaa(s,r,q,p) += sign * c_I * c_J;
+                }
 
 
                 // 2 electron excitations in alpha, 0 in beta
                 if ((alpha_I.countNumberOfDifferences(alpha_J) == 4) && (beta_I.countNumberOfDifferences(beta_J) == 0)) {
 
-                    // Find the orbitals that are different
-                    std::vector<size_t> indices = alpha_I.findDifferences(alpha_J);
-                    size_t p = indices[0];
-                    size_t q = indices[1];
-                    size_t r = indices[2];
-                    size_t s = indices[3];
+                    // Find the orbitals that are occupied in one string, and aren't in the other
+                    std::vector<size_t> occupied_indices_I = alpha_I.findOccupiedDifferences(alpha_J);  // we're sure this has two elements
+                    size_t p = occupied_indices_I[0];
+                    size_t r = occupied_indices_I[0];
 
+                    std::vector<size_t> occupied_indices_J = alpha_J.findOccupiedDifferences(alpha_I);  // we're sure this has two elements
+                    size_t q = occupied_indices_J[0];
+                    size_t s = occupied_indices_J[1];
+
+
+                    // Calculate the total sign, and include it in the 2-RDM contribution
+                    int sign = alpha_I.operatorPhaseFactor(p) * alpha_I.operatorPhaseFactor(r) * alpha_J.operatorPhaseFactor(q) * alpha_J.operatorPhaseFactor(s);
+                    this->two_rdm_aaaa(p,q,r,s) += sign * c_I * c_J;
+                    this->two_rdm_aaaa(p,s,r,q) -= sign * c_I * c_J;
+                    this->two_rdm_aaaa(r,q,p,s) -= sign * c_I * c_J;
+                    this->two_rdm_aaaa(r,s,p,q) += sign * c_I * c_J;
+
+                    this->two_rdm_aaaa(q,p,s,r) += sign * c_I * c_J;
+                    this->two_rdm_aaaa(s,p,q,r) -= sign * c_I * c_J;
+                    this->two_rdm_aaaa(q,r,s,p) -= sign * c_I * c_J;
+                    this->two_rdm_aaaa(s,r,q,p) += sign * c_I * c_J;
                 }
 
-            }
 
-        }
+                // 0 electron excitations in alpha, 2 in beta
+                if ((alpha_I.countNumberOfDifferences(alpha_J) == 0) && (beta_I.countNumberOfDifferences(beta_J) == 2)) {
 
+                    // Find the orbitals that are occupied in one string, and aren't in the other
+                    std::vector<size_t> occupied_indices_I = beta_I.findOccupiedDifferences(beta_J);  // we're sure this has two elements
+                    size_t p = occupied_indices_I[0];
+                    size_t r = occupied_indices_I[0];
+
+                    std::vector<size_t> occupied_indices_J = beta_J.findOccupiedDifferences(beta_I);  // we're sure this has two elements
+                    size_t q = occupied_indices_J[0];
+                    size_t s = occupied_indices_J[1];
+
+
+                    // Calculate the total sign, and include it in the 2-RDM contribution
+                    int sign = alpha_I.operatorPhaseFactor(p) * alpha_I.operatorPhaseFactor(r) * alpha_J.operatorPhaseFactor(q) * alpha_J.operatorPhaseFactor(s);
+                    this->two_rdm_bbbb(p,q,r,s) += sign * c_I * c_J;
+                    this->two_rdm_bbbb(p,s,r,q) -= sign * c_I * c_J;
+                    this->two_rdm_bbbb(r,q,p,s) -= sign * c_I * c_J;
+                    this->two_rdm_bbbb(r,s,p,q) += sign * c_I * c_J;
+
+                    this->two_rdm_bbbb(q,p,s,r) += sign * c_I * c_J;
+                    this->two_rdm_bbbb(s,p,q,r) -= sign * c_I * c_J;
+                    this->two_rdm_bbbb(q,r,s,p) -= sign * c_I * c_J;
+                    this->two_rdm_bbbb(s,r,q,p) += sign * c_I * c_J;
+                }
+
+            }  // loop over all addresses J > I
+
+        }  // loop over all addresses I
     }
 };
 
-}  // namespace ci
 
+}  // namespace ci
 
 
 
