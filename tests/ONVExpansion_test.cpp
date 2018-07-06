@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE ( constructor_fci_four_electrons ) {
 }
 
 
-BOOST_AUTO_TEST_CASE ( constructor_doci ) {
+BOOST_AUTO_TEST_CASE ( constructor_doci_two_electrons ) {
 
     // Do an H2@DOCI//STO-3G calculation
 
@@ -196,6 +196,44 @@ BOOST_AUTO_TEST_CASE ( constructor_doci ) {
     // Set up the reference ONV expansion
     ci::ONVExpansion<unsigned long> ref_expansion {{bmqc::SpinString<unsigned long> (1, 2), bmqc::SpinString<unsigned long> (1, 2), -0.993601},
                                                    {bmqc::SpinString<unsigned long> (2, 2), bmqc::SpinString<unsigned long> (2, 2), 0.112949}};
+
+
+    // Create the test expansion
+    ci::ONVExpansion<unsigned long> test_expansion (doci);
+
+
+    BOOST_CHECK(test_expansion.isEqual(ref_expansion, 1.0e-06));
+}
+
+
+BOOST_AUTO_TEST_CASE ( constructor_doci_four_electrons ) {
+
+    // Do an H2(2-)@DOCI//6-31G calculation
+
+    // Prepare the AO basis
+    libwint::Molecule h2 ("../tests/reference_data/h2.xyz");
+    libwint::AOBasis ao_basis (h2, "6-31G");
+    ao_basis.calculateIntegrals();
+
+    // Prepare the SO basis from RHF coefficients
+    hf::rhf::RHF rhf (h2, ao_basis, 1.0e-06);
+    rhf.solve();
+    libwint::SOBasis so_basis (ao_basis, rhf.get_C_canonical());
+
+
+    // Do a dense FCI calculation based on a given SO basis
+    ci::DOCI doci (so_basis, 4);  // 4 electrons
+    doci.solve(numopt::eigenproblem::SolverType::DENSE);
+
+
+    // Create the reference expansion (constructing the ONVExpansion manually from the DOCI calculation)
+    ci::ONVExpansion<unsigned long> ref_expansion {{bmqc::SpinString<unsigned long> (3, 4), bmqc::SpinString<unsigned long> (3, 4), -0.997032},
+                                                   {bmqc::SpinString<unsigned long> (5, 4), bmqc::SpinString<unsigned long> (5, 4), 0.0246847},
+                                                   {bmqc::SpinString<unsigned long> (6, 4), bmqc::SpinString<unsigned long> (6, 4), 0.0553457},
+                                                   {bmqc::SpinString<unsigned long> (9, 4), bmqc::SpinString<unsigned long> (9, 4), 0.0227064},
+                                                   {bmqc::SpinString<unsigned long> (10, 4), bmqc::SpinString<unsigned long> (10, 4), 0.0416207},
+                                                   {bmqc::SpinString<unsigned long> (12, 4), bmqc::SpinString<unsigned long> (12, 4), -0.00263289}
+    };
 
 
     // Create the test expansion
