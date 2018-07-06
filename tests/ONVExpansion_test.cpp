@@ -4,6 +4,7 @@
 #include "ONVExpansion.hpp"
 
 #include <hf.hpp>
+#include <cpputil.hpp>
 
 
 #include <boost/test/unit_test.hpp>
@@ -191,20 +192,38 @@ BOOST_AUTO_TEST_CASE ( two_rdms_implementing ) {
     ci::FCI fci (so_basis, 1, 1);  // N_alpha = 1, N_beta = 1
     fci.solve(numopt::eigenproblem::SolverType::DENSE);
 
-
     fci.calculate2RDMs();
-    std::cout << fci.get_two_rdm() << std::endl << std::endl;
+    Eigen::Tensor<double, 4> ref_two_rdm_aaaa = fci.get_two_rdm_aaaa();
+    Eigen::Tensor<double, 4> ref_two_rdm_aabb = fci.get_two_rdm_aabb();
+    Eigen::Tensor<double, 4> ref_two_rdm_bbaa = fci.get_two_rdm_bbaa();
+    Eigen::Tensor<double, 4> ref_two_rdm_bbbb = fci.get_two_rdm_bbbb();
+    Eigen::Tensor<double, 4> ref_two_rdm = fci.get_two_rdm();
 
 
     // Create a reference expansion
-    ci::ONVExpansion<unsigned long> ref_expansion {{bmqc::SpinString<unsigned long> (1, 2), bmqc::SpinString<unsigned long> (1, 2), -0.993601},
-                                                   {bmqc::SpinString<unsigned long> (1, 2), bmqc::SpinString<unsigned long> (2, 2), -2.40468e-16},
-                                                   {bmqc::SpinString<unsigned long> (2, 2), bmqc::SpinString<unsigned long> (1, 2), -3.04909e-16},
-                                                   {bmqc::SpinString<unsigned long> (2, 2), bmqc::SpinString<unsigned long> (2, 2), 0.112949}};
+    ci::ONVExpansion<unsigned long> expansion {{bmqc::SpinString<unsigned long> (1, 2), bmqc::SpinString<unsigned long> (1, 2), -0.993601},
+                                               {bmqc::SpinString<unsigned long> (1, 2), bmqc::SpinString<unsigned long> (2, 2), -2.40468e-16},
+                                               {bmqc::SpinString<unsigned long> (2, 2), bmqc::SpinString<unsigned long> (1, 2), -3.04909e-16},
+                                               {bmqc::SpinString<unsigned long> (2, 2), bmqc::SpinString<unsigned long> (2, 2), 0.112949}};
 
 
-    ref_expansion.calculate2RDMs();
+    expansion.calculate2RDMs();
+    Eigen::Tensor<double, 4> test_two_rdm_aaaa = expansion.get_two_rdm_aaaa();
+    Eigen::Tensor<double, 4> test_two_rdm_aabb = expansion.get_two_rdm_aabb();
+    Eigen::Tensor<double, 4> test_two_rdm_bbaa = expansion.get_two_rdm_bbaa();
+    Eigen::Tensor<double, 4> test_two_rdm_bbbb = expansion.get_two_rdm_bbbb();
+    Eigen::Tensor<double, 4> test_two_rdm = expansion.get_two_rdm();
 
 
-    std::cout << ref_expansion.get_two_rdm() << std::endl;
+
+
+    std::cout << ref_two_rdm_aabb << std::endl << std::endl;
+    std::cout << test_two_rdm_aabb << std::endl << std::endl;
+
+
+    BOOST_CHECK(cpputil::linalg::areEqual(test_two_rdm_aaaa, ref_two_rdm_aaaa, 1.0e-06));
+    BOOST_CHECK(cpputil::linalg::areEqual(test_two_rdm_aabb, ref_two_rdm_aabb, 1.0e-06));
+    BOOST_CHECK(cpputil::linalg::areEqual(test_two_rdm_bbaa, ref_two_rdm_bbaa, 1.0e-06));
+    BOOST_CHECK(cpputil::linalg::areEqual(test_two_rdm_bbbb, ref_two_rdm_bbbb, 1.0e-06));
+    BOOST_CHECK(cpputil::linalg::areEqual(test_two_rdm, ref_two_rdm, 1.0e-06));
 }

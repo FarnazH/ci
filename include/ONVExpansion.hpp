@@ -34,8 +34,8 @@ private:
     size_t dim;  // the dimension of the expansion
 
 
-    bool are_computed_one_rdms = false;
-    bool are_computed_two_rdms = false;
+    bool are_calculated_one_rdms = false;
+    bool are_calculated_two_rdms = false;
 
     Eigen::MatrixXd one_rdm_aa;  // alpha-alpha (a-a) 1-RDM
     Eigen::MatrixXd one_rdm_bb;  // beta-beta (b-b) 1-RDM
@@ -224,7 +224,7 @@ public:
     size_t get_dim() const { return this->dim; }
 
     Eigen::MatrixXd get_one_rdm_aa() const {
-        if (!this->are_computed_one_rdms) {
+        if (!this->are_calculated_one_rdms) {
             throw std::logic_error("The requested reduced density matrix is not computed yet.");
         }
         return this->one_rdm_aa;
@@ -232,7 +232,7 @@ public:
 
 
     Eigen::MatrixXd get_one_rdm_bb() const {
-        if (!this->are_computed_one_rdms) {
+        if (!this->are_calculated_one_rdms) {
             throw std::logic_error("The requested reduced density matrix is not computed yet.");
         }
         return this-> one_rdm_bb;
@@ -240,7 +240,7 @@ public:
 
 
     Eigen::MatrixXd get_one_rdm() const {
-        if (!this->are_computed_one_rdms) {
+        if (!this->are_calculated_one_rdms) {
             throw std::logic_error("The requested reduced density matrix is not computed yet.");
         }
         return this-> one_rdm;
@@ -248,7 +248,7 @@ public:
 
 
     Eigen::Tensor<double, 4> get_two_rdm_aaaa() const {
-        if (!this->are_computed_two_rdms) {
+        if (!this->are_calculated_two_rdms) {
             throw std::logic_error("The requested reduced density matrix is not computed yet.");
         }
         return this->two_rdm_aaaa;
@@ -256,7 +256,7 @@ public:
 
 
     Eigen::Tensor<double, 4> get_two_rdm_aabb() const {
-        if (!this->are_computed_two_rdms) {
+        if (!this->are_calculated_two_rdms) {
             throw std::logic_error("The requested reduced density matrix is not computed yet.");
         }
         return this->two_rdm_aabb;
@@ -264,7 +264,7 @@ public:
 
 
     Eigen::Tensor<double, 4> get_two_rdm_bbaa() const {
-        if (!this->are_computed_two_rdms) {
+        if (!this->are_calculated_two_rdms) {
             throw std::logic_error("The requested reduced density matrix is not computed yet.");
         }
         return this->two_rdm_bbaa;
@@ -272,7 +272,7 @@ public:
 
 
     Eigen::Tensor<double, 4> get_two_rdm_bbbb() const {
-        if (!this->are_computed_two_rdms) {
+        if (!this->are_calculated_two_rdms) {
             throw std::logic_error("The requested reduced density matrix is not computed yet.");
         }
         return this->two_rdm_bbbb;
@@ -280,7 +280,7 @@ public:
 
 
     Eigen::Tensor<double, 4> get_two_rdm() const {
-        if (!this->are_computed_two_rdms) {
+        if (!this->are_calculated_two_rdms) {
             throw std::logic_error("The requested reduced density matrix is not computed yet.");
         }
         return this->two_rdm;
@@ -392,7 +392,7 @@ public:
 
         // The total 1-RDM is the sum of the spin components
         this->one_rdm = this->one_rdm_aa + this->one_rdm_bb;
-        this->are_computed_one_rdms = true;
+        this->are_calculated_one_rdms = true;
     }
 
     /**
@@ -576,7 +576,7 @@ public:
                     // Find the orbitals that are occupied in one string, and aren't in the other
                     std::vector<size_t> occupied_indices_I = alpha_I.findOccupiedDifferences(alpha_J);  // we're sure this has two elements
                     size_t p = occupied_indices_I[0];
-                    size_t r = occupied_indices_I[0];
+                    size_t r = occupied_indices_I[1];
 
                     std::vector<size_t> occupied_indices_J = alpha_J.findOccupiedDifferences(alpha_I);  // we're sure this has two elements
                     size_t q = occupied_indices_J[0];
@@ -598,12 +598,12 @@ public:
 
 
                 // 0 electron excitations in alpha, 2 in beta
-                if ((alpha_I.countNumberOfDifferences(alpha_J) == 0) && (beta_I.countNumberOfDifferences(beta_J) == 2)) {
+                if ((alpha_I.countNumberOfDifferences(alpha_J) == 0) && (beta_I.countNumberOfDifferences(beta_J) == 4)) {
 
                     // Find the orbitals that are occupied in one string, and aren't in the other
                     std::vector<size_t> occupied_indices_I = beta_I.findOccupiedDifferences(beta_J);  // we're sure this has two elements
                     size_t p = occupied_indices_I[0];
-                    size_t r = occupied_indices_I[0];
+                    size_t r = occupied_indices_I[1];
 
                     std::vector<size_t> occupied_indices_J = beta_J.findOccupiedDifferences(beta_I);  // we're sure this has two elements
                     size_t q = occupied_indices_J[0];
@@ -611,7 +611,7 @@ public:
 
 
                     // Calculate the total sign, and include it in the 2-RDM contribution
-                    int sign = alpha_I.operatorPhaseFactor(p) * alpha_I.operatorPhaseFactor(r) * alpha_J.operatorPhaseFactor(q) * alpha_J.operatorPhaseFactor(s);
+                    int sign = beta_I.operatorPhaseFactor(p) * beta_I.operatorPhaseFactor(r) * beta_J.operatorPhaseFactor(q) * beta_J.operatorPhaseFactor(s);
                     this->two_rdm_bbbb(p,q,r,s) += sign * c_I * c_J;
                     this->two_rdm_bbbb(p,s,r,q) -= sign * c_I * c_J;
                     this->two_rdm_bbbb(r,q,p,s) -= sign * c_I * c_J;
@@ -626,6 +626,9 @@ public:
             }  // loop over all addresses J > I
 
         }  // loop over all addresses I
+
+    this->two_rdm = this->two_rdm_aaaa + this->two_rdm_aabb + this->two_rdm_bbaa + this->two_rdm_bbbb;
+    this->are_calculated_two_rdms = true;
     }
 };
 
