@@ -344,7 +344,6 @@ public:
         this->one_rdm_bb = Eigen::MatrixXd::Zero(this->K, this->K);
 
 
-        std::cout << "Starting 1-DM calculation for ONVExpansion." << std::endl;
         for (size_t I = 0; I < this->dim; I++) {  // loop over all addresses (1)
 
             bmqc::SpinString<T> alpha_I = this->expansion[I].alpha;
@@ -379,11 +378,6 @@ public:
                     size_t p = alpha_I.findOccupiedDifferences(alpha_J)[0];  // we're sure that there is only 1 element in the std::vector<size_t>
                     size_t q = alpha_J.findOccupiedDifferences(alpha_I)[0];  // we're sure that there is only 1 element in the std::vector<size_t>
 
-                    std::cout << "alpha_I: " << alpha_I.get_representation() << std::endl;
-                    std::cout << "alpha_J: " << alpha_J.get_representation() << std::endl;
-                    std::cout << "1 electron excitation in alpha: " << p << ' ' << q << std::endl;
-
-
                     // Calculate the total sign, and include it in the RDM contribution
                     int sign = alpha_I.operatorPhaseFactor(p) * alpha_J.operatorPhaseFactor(q);
                     this->one_rdm_aa(p,q) += sign * c_I * c_J;
@@ -397,11 +391,6 @@ public:
                     // Find the orbitals that are occupied in one string, and aren't in the other
                     size_t p = beta_I.findOccupiedDifferences(beta_J)[0];  // we're sure that there is only 1 element in the std::vector<size_t>
                     size_t q = beta_J.findOccupiedDifferences(beta_I)[0];  // we're sure that there is only 1 element in the std::vector<size_t>
-
-                    std::cout << "beta_I: " << beta_I.get_representation() << std::endl;
-                    std::cout << "beta_J: " << beta_J.get_representation() << std::endl;
-                    std::cout << "1 electron excitation in beta: " << p << ' ' << q << std::endl;
-
 
                     // Calculate the total sign, and include it in the RDM contribution
                     int sign = beta_I.operatorPhaseFactor(p) * beta_J.operatorPhaseFactor(q);
