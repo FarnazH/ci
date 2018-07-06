@@ -170,3 +170,41 @@ BOOST_AUTO_TEST_CASE ( one_rdms_fci_H2_6_31G ) {
     BOOST_CHECK(test_one_rdm_bb.isApprox(ref_one_rdm_bb));
     BOOST_CHECK(test_one_rdm.isApprox(ref_one_rdm));
 }
+
+
+BOOST_AUTO_TEST_CASE ( two_rdms_implementing ) {
+
+    // Do an H2@FCI//STO-3G calculation
+
+    // Prepare the AO basis
+    libwint::Molecule h2 ("../tests/reference_data/h2.xyz");
+    libwint::AOBasis ao_basis (h2, "STO-3G");
+    ao_basis.calculateIntegrals();
+
+    // Prepare the SO basis from RHF coefficients
+    hf::rhf::RHF rhf (h2, ao_basis, 1.0e-06);
+    rhf.solve();
+    libwint::SOBasis so_basis (ao_basis, rhf.get_C_canonical());
+
+
+    // Do a dense FCI calculation based on a given SO basis
+    ci::FCI fci (so_basis, 1, 1);  // N_alpha = 1, N_beta = 1
+    fci.solve(numopt::eigenproblem::SolverType::DENSE);
+
+
+    fci.calculate2RDMs();
+    std::cout << fci.get_two_rdm() << std::endl << std::endl;
+
+
+    // Create a reference expansion
+    ci::ONVExpansion<unsigned long> ref_expansion {{bmqc::SpinString<unsigned long> (1, 2), bmqc::SpinString<unsigned long> (1, 2), -0.993601},
+                                                   {bmqc::SpinString<unsigned long> (1, 2), bmqc::SpinString<unsigned long> (2, 2), -2.40468e-16},
+                                                   {bmqc::SpinString<unsigned long> (2, 2), bmqc::SpinString<unsigned long> (1, 2), -3.04909e-16},
+                                                   {bmqc::SpinString<unsigned long> (2, 2), bmqc::SpinString<unsigned long> (2, 2), 0.112949}};
+
+
+    ref_expansion.calculate2RDMs();
+
+
+    std::cout << ref_expansion.get_two_rdm() << std::endl;
+}

@@ -362,10 +362,9 @@ public:
                 // 1 electron excitation in alpha (i.e. 2 differences), 0 in beta
                 if ((alpha_I.countNumberOfDifferences(alpha_J) == 2) && (beta_I.countNumberOfDifferences(beta_J) == 0)) {
 
-                    // Find the orbitals that are different
-                    std::vector<size_t> indices = alpha_I.findDifferences(alpha_J);
-                    size_t p = indices[0];
-                    size_t q = indices[1];
+                    // Find the orbitals that are occupied in one string, and aren't in the other
+                    size_t p = alpha_I.findOccupiedDifferences(alpha_J)[0];  // we're sure that there is only 1 element in the std::vector<size_t>
+                    size_t q = alpha_J.findOccupiedDifferences(alpha_I)[0];  // we're sure that there is only 1 element in the std::vector<size_t>
 
                     // Calculate the total sign, and include it in the RDM contribution
                     int sign = alpha_I.operatorPhaseFactor(p) * alpha_J.operatorPhaseFactor(q);
@@ -377,10 +376,9 @@ public:
                 // 1 electron excitation in beta, 0 in alpha
                 if ((alpha_I.countNumberOfDifferences(alpha_J) == 0) && (beta_I.countNumberOfDifferences(beta_J) == 2)) {
 
-                    // Find the orbitals that are different
-                    std::vector<size_t> indices = beta_I.findDifferences(beta_J);
-                    size_t p = indices[0];
-                    size_t q = indices[1];
+                    // Find the orbitals that are occupied in one string, and aren't in the other
+                    size_t p = beta_I.findOccupiedDifferences(beta_J)[0];  // we're sure that there is only 1 element in the std::vector<size_t>
+                    size_t q = beta_J.findOccupiedDifferences(beta_I)[0];  // we're sure that there is only 1 element in the std::vector<size_t>
 
                     // Calculate the total sign, and include it in the RDM contribution
                     int sign = beta_I.operatorPhaseFactor(p) * beta_J.operatorPhaseFactor(q);
@@ -401,6 +399,104 @@ public:
      *  Calculate all the 2-RDMS
      */
     void calculate2RDMs() {
+
+        this->two_rdm_aaaa = Eigen::Tensor<double, 4> (this->K, this->K, this->K, this->K);
+        this->two_rdm_aaaa.setZero();
+        this->two_rdm_aabb = Eigen::Tensor<double, 4> (this->K, this->K, this->K, this->K);
+        this->two_rdm_aabb.setZero();
+        this->two_rdm_bbaa = Eigen::Tensor<double, 4> (this->K, this->K, this->K, this->K);
+        this->two_rdm_bbaa.setZero();
+        this->two_rdm_bbbb = Eigen::Tensor<double, 4> (this->K, this->K, this->K, this->K);
+        this->two_rdm_bbbb.setZero();
+
+
+        for (size_t I = 0; I < this->dim; I++) {  // loop over all addresses I
+
+            bmqc::SpinString<T> alpha_I = this->expansion[I].alpha;
+            bmqc::SpinString<T> beta_I = this->expansion[I].beta;
+            double c_I = this->expansion[I].coefficient;
+
+
+            for (size_t p = 0; p < this->K; p++) {
+
+                if (alpha_I.isOccupied(p)) {
+                    for (size_t q = 0; q < this->K; q++) {
+                        if (p == q) {  // can't create/annihilate the same orbital twice
+                            continue;
+                        }
+
+                        if (beta_I.isOccupied(q)) {
+                            this->two_rdm_aabb(p,q,q,p) += std::pow(c_I, 2);
+                        } else {
+                            if (alpha_I.isOccupied(q)) {
+                                this->two_rdm_aaaa(p,q,q,p) += std::pow(c_I, 2);
+                                this->two_rdm_aaaa(p,p,q,q) -= std::pow(c_I, 2);
+                            }
+                        }
+                    }
+                }
+
+                if (beta_I.isOccupied(p)) {
+                    for (size_t q = 0; q < this->K; q++) {
+                        if (p == q) {  // can't create/annihilate the same orbital twice
+                            continue;
+                        }
+
+                        if (alpha_I.isOccupied(q)) {
+                            this->two_rdm_bbaa(p,q,q,p) += std::pow(c_I, 2);
+                        } else {
+                            if (beta_I.isOccupied(q)) {
+                                this->two_rdm_bbbb(p,q,q,p) += std::pow(c_I, 2);
+                                this->two_rdm_aaaa(p,p,q,q) -= std::pow(c_I, 2);
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            for (size_t J = I+1; J < this->dim; J++) {
+
+                bmqc::SpinString<T> alpha_J = this->expansion[J].alpha;
+                bmqc::SpinString<T> beta_J = this->expansion[J].beta;
+                double c_J = this->expansion[J].coefficient;
+
+
+                // 1 electron excitation in alpha, 0 in beta
+                if ((alpha_I.countNumberOfDifferences(alpha_J) == 2) && (beta_I.countNumberOfDifferences(beta_J) == 0)) {
+
+                    // Find the orbitals that are different
+                    std::vector<size_t> indices = alpha_I.findDifferences(alpha_J);
+                    size_t p = indices[0];
+                    size_t q = indices[1];
+
+                    for (size_t r = 0; r < this->K; r++) {
+
+                        // Calculate the total sign, and include it in the RDM contribution
+                        int sign = alpha_I.operatorPhaseFactor(p) * alpha_J.operatorPhaseFactor(q);
+                        this->two_rdm_aaaa(p,r,r,q) += sign * c_I * c_J;
+                        this->two_rdm_aaaa(p,q,r,r) -= sign * c_I * c_J;
+                        this->two_rdm_aaaa(r,r,p,q) += sign * c_I * c_J;
+                    }
+                }
+
+
+
+                // 2 electron excitations in alpha, 0 in beta
+                if ((alpha_I.countNumberOfDifferences(alpha_J) == 4) && (beta_I.countNumberOfDifferences(beta_J) == 0)) {
+
+                    // Find the orbitals that are different
+                    std::vector<size_t> indices = alpha_I.findDifferences(alpha_J);
+                    size_t p = indices[0];
+                    size_t q = indices[1];
+                    size_t r = indices[2];
+                    size_t s = indices[3];
+
+                }
+
+            }
+
+        }
 
     }
 };
