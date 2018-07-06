@@ -503,7 +503,7 @@ public:
 
 
                 // 0 electron excitations in alpha, 1 in beta
-                if ((alpha_I.countNumberOfDifferences(alpha_J) == 0) && (beta_I.countNumberOfDifferences(beta_J) == 1)) {
+                if ((alpha_I.countNumberOfDifferences(alpha_J) == 0) && (beta_I.countNumberOfDifferences(beta_J) == 2)) {
 
                     // Find the orbitals that are occupied in one string, and aren't in the other
                     size_t p = beta_I.findOccupiedDifferences(beta_J)[0];  // we're sure that there is only 1 element in the std::vector<size_t>
