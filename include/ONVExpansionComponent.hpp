@@ -2,6 +2,8 @@
 #define CI_ONVEXPANSIONCOMPONENT_HPP
 
 
+#include <iostream>
+
 #include <bmqc.hpp>
 
 
@@ -22,6 +24,12 @@ struct ONVExpansionComponent {
         return (this->alpha == other.alpha)
                && (this->beta == other.beta)
                && (std::abs(this->coefficient - other.coefficient) < tolerance);
+    }
+
+
+    friend std::ostream& operator<<(std::ostream& os, const ci::ONVExpansionComponent<T>& expansion_component) {
+        os << expansion_component.alpha << '|' << expansion_component.beta << ' ' << expansion_component.coefficient;
+        return os;
     }
 };
 
