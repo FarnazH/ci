@@ -133,6 +133,7 @@ BOOST_AUTO_TEST_CASE ( constructor_doci ) {
 }
 
 
+// K = 4, dim = 16
 BOOST_AUTO_TEST_CASE ( one_rdms_fci_H2_6_31G ) {
 
     // Do an H2@FCI//6-31G calculation
@@ -158,7 +159,7 @@ BOOST_AUTO_TEST_CASE ( one_rdms_fci_H2_6_31G ) {
     Eigen::MatrixXd ref_one_rdm = fci.get_one_rdm();
 
 
-    // Read in the FCI expansion into an ONVExpansion, and calculate the 1-RDM
+    // Read in the FCI expansion into an ONVExpansion, and calculate the 1-RDMs
     ci::ONVExpansion<unsigned long> expansion (fci);
     expansion.calculate1RDMs();
 
@@ -173,6 +174,7 @@ BOOST_AUTO_TEST_CASE ( one_rdms_fci_H2_6_31G ) {
 }
 
 
+// K = 4, dim = 16
 BOOST_AUTO_TEST_CASE ( two_rdms_fci_H2_6_31G ) {
 
     // Do an H2@FCI//STO-3G calculation
@@ -200,7 +202,7 @@ BOOST_AUTO_TEST_CASE ( two_rdms_fci_H2_6_31G ) {
     Eigen::Tensor<double, 4> ref_two_rdm = fci.get_two_rdm();
 
 
-    // Read in the FCI expansion into an ONVExpansion, and calculate the 1-RDM
+    // Read in the FCI expansion into an ONVExpansion, and calculate the 2-RDMs
     ci::ONVExpansion<unsigned long> expansion (fci);
 
     expansion.calculate2RDMs();
@@ -210,6 +212,95 @@ BOOST_AUTO_TEST_CASE ( two_rdms_fci_H2_6_31G ) {
     Eigen::Tensor<double, 4> test_two_rdm_bbbb = expansion.get_two_rdm_bbbb();
     Eigen::Tensor<double, 4> test_two_rdm = expansion.get_two_rdm();
 
+
+    BOOST_CHECK(cpputil::linalg::areEqual(test_two_rdm_aaaa, ref_two_rdm_aaaa, 1.0e-06));
+    BOOST_CHECK(cpputil::linalg::areEqual(test_two_rdm_aabb, ref_two_rdm_aabb, 1.0e-06));
+    BOOST_CHECK(cpputil::linalg::areEqual(test_two_rdm_bbaa, ref_two_rdm_bbaa, 1.0e-06));
+    BOOST_CHECK(cpputil::linalg::areEqual(test_two_rdm_bbbb, ref_two_rdm_bbbb, 1.0e-06));
+    BOOST_CHECK(cpputil::linalg::areEqual(test_two_rdm, ref_two_rdm, 1.0e-06));
+}
+
+
+// K = 7, dim = 441
+BOOST_AUTO_TEST_CASE ( one_rdms_fci_H2O_STO_3G ) {
+
+    // Do an H2O@FCI//STO-3G calculation
+
+    // Prepare the AO basis
+    libwint::Molecule h2o ("../tests/reference_data/h2o.xyz");
+    libwint::AOBasis ao_basis (h2o, "STO-3G");
+    ao_basis.calculateIntegrals();
+
+    // Prepare the SO basis from RHF coefficients
+    hf::rhf::RHF rhf (h2o, ao_basis, 1.0e-06);
+    rhf.solve();
+    libwint::SOBasis so_basis (ao_basis, rhf.get_C_canonical());
+
+
+    // Do a dense FCI calculation based on a given SO basis
+    ci::FCI fci (so_basis, 5, 5);  // N_alpha = 5, N_beta = 5
+    fci.solve(numopt::eigenproblem::SolverType::DENSE);
+
+
+    fci.calculate1RDMs();
+    Eigen::MatrixXd ref_one_rdm_aa = fci.get_one_rdm_aa();
+    Eigen::MatrixXd ref_one_rdm_bb = fci.get_one_rdm_bb();
+    Eigen::MatrixXd ref_one_rdm = fci.get_one_rdm();
+
+
+    // Read in the FCI expansion into an ONVExpansion, and calculate the 1-RDMs
+    ci::ONVExpansion<unsigned long> expansion (fci);
+    expansion.calculate1RDMs();
+
+    Eigen::MatrixXd test_one_rdm_aa = expansion.get_one_rdm_aa();
+    Eigen::MatrixXd test_one_rdm_bb = expansion.get_one_rdm_bb();
+    Eigen::MatrixXd test_one_rdm = expansion.get_one_rdm();
+
+
+    BOOST_CHECK(test_one_rdm_aa.isApprox(ref_one_rdm_aa));
+    BOOST_CHECK(test_one_rdm_bb.isApprox(ref_one_rdm_bb));
+    BOOST_CHECK(test_one_rdm.isApprox(ref_one_rdm));
+}
+
+
+// K = 7, dim = 441
+BOOST_AUTO_TEST_CASE ( two_rdms_fci_H2O_STO_3G ) {
+
+    // Do an H2O@FCI//STO-3G calculation
+
+    // Prepare the AO basis
+    libwint::Molecule h2o ("../tests/reference_data/h2o.xyz");
+    libwint::AOBasis ao_basis (h2o, "STO-3G");
+    ao_basis.calculateIntegrals();
+
+    // Prepare the SO basis from RHF coefficients
+    hf::rhf::RHF rhf (h2o, ao_basis, 1.0e-06);
+    rhf.solve();
+    libwint::SOBasis so_basis (ao_basis, rhf.get_C_canonical());
+
+
+    // Do a dense FCI calculation based on a given SO basis
+    ci::FCI fci (so_basis, 5, 5);  // N_alpha = 5, N_beta = 5
+    fci.solve(numopt::eigenproblem::SolverType::DENSE);
+
+
+    fci.calculate2RDMs();
+    Eigen::Tensor<double, 4> ref_two_rdm_aaaa = fci.get_two_rdm_aaaa();
+    Eigen::Tensor<double, 4> ref_two_rdm_aabb = fci.get_two_rdm_aabb();
+    Eigen::Tensor<double, 4> ref_two_rdm_bbaa = fci.get_two_rdm_bbaa();
+    Eigen::Tensor<double, 4> ref_two_rdm_bbbb = fci.get_two_rdm_bbbb();
+    Eigen::Tensor<double, 4> ref_two_rdm = fci.get_two_rdm();
+
+
+    // Read in the FCI expansion into an ONVExpansion, and calculate the 2-RDMs
+    ci::ONVExpansion<unsigned long> expansion (fci);
+
+    expansion.calculate2RDMs();
+    Eigen::Tensor<double, 4> test_two_rdm_aaaa = expansion.get_two_rdm_aaaa();
+    Eigen::Tensor<double, 4> test_two_rdm_aabb = expansion.get_two_rdm_aabb();
+    Eigen::Tensor<double, 4> test_two_rdm_bbaa = expansion.get_two_rdm_bbaa();
+    Eigen::Tensor<double, 4> test_two_rdm_bbbb = expansion.get_two_rdm_bbbb();
+    Eigen::Tensor<double, 4> test_two_rdm = expansion.get_two_rdm();
 
 
     BOOST_CHECK(cpputil::linalg::areEqual(test_two_rdm_aaaa, ref_two_rdm_aaaa, 1.0e-06));
