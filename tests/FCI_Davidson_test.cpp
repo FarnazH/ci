@@ -27,12 +27,18 @@ BOOST_AUTO_TEST_CASE ( FCI_H2_STO_3G_Davidson ) {
 
     // Do a dense FCI calculation as reference
     ci::FCI fci_dense (so_basis, 1, 1);  // N_alpha = 1, N_beta = 1
-    fci_dense.solve(numopt::eigenproblem::SolverType::DENSE);
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    fci_dense.solve(&dense_options);
 
 
     // Do a Davidson FCI calculation
     ci::FCI fci_davidson (so_basis, 1, 1);  // N_alpha = 1, N_beta = 1
-    fci_davidson.solve(numopt::eigenproblem::SolverType::DAVIDSON);
+    numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    //  In lexical notation, the Hartree-Fock determinant has the lowest address
+    Eigen::VectorXd initial_guess = Eigen::VectorXd::Zero(fci_davidson.get_dim());
+    initial_guess(0) = 1;
+    davidson_options.X_0 = initial_guess;
+    fci_davidson.solve(&davidson_options);
 
 
     BOOST_CHECK(std::abs(fci_dense.get_eigenvalue() - fci_davidson.get_eigenvalue()) < 1.0e-12);
@@ -57,12 +63,18 @@ BOOST_AUTO_TEST_CASE ( FCI_H2_6_31Gxx_Davidson ) {
 
     // Do a dense FCI calculation as reference
     ci::FCI fci_dense (so_basis, 1, 1);  // N_alpha = 1, N_beta = 1
-    fci_dense.solve(numopt::eigenproblem::SolverType::DENSE);
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    fci_dense.solve(&dense_options);
 
 
     // Do a Davidson FCI calculation
     ci::FCI fci_davidson (so_basis, 1, 1);  // N_alpha = 1, N_beta = 1
-    fci_davidson.solve(numopt::eigenproblem::SolverType::DAVIDSON);
+    numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    //  In lexical notation, the Hartree-Fock determinant has the lowest address
+    Eigen::VectorXd initial_guess = Eigen::VectorXd::Zero(fci_davidson.get_dim());
+    initial_guess(0) = 1;
+    davidson_options.X_0 = initial_guess;
+    fci_davidson.solve(&davidson_options);
 
 
     BOOST_CHECK(std::abs(fci_dense.get_eigenvalue() - fci_davidson.get_eigenvalue()) < 1.0e-12);
@@ -87,12 +99,18 @@ BOOST_AUTO_TEST_CASE ( FCI_H2O_STO_3G_Davidson ) {
 
     // Do a dense FCI calculation as reference
     ci::FCI fci_dense (so_basis, 5, 5);  // N_alpha = 5, N_beta = 5
-    fci_dense.solve(numopt::eigenproblem::SolverType::DENSE);
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    fci_dense.solve(&dense_options);
 
 
     // Do a Davidson FCI calculation
     ci::FCI fci_davidson (so_basis, 5, 5);  // N_alpha = 5, N_beta = 5
-    fci_davidson.solve(numopt::eigenproblem::SolverType::DAVIDSON);
+    numopt::eigenproblem::DavidsonSolverOptions davidson_options;
+    //  In lexical notation, the Hartree-Fock determinant has the lowest address
+    Eigen::VectorXd initial_guess = Eigen::VectorXd::Zero(fci_davidson.get_dim());
+    initial_guess(0) = 1;
+    davidson_options.X_0 = initial_guess;
+    fci_davidson.solve(&davidson_options);
 
 
     BOOST_CHECK(std::abs(fci_dense.get_eigenvalue() - fci_davidson.get_eigenvalue()) < 1.0e-12);
