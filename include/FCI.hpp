@@ -107,6 +107,8 @@ public:
     // GETTERS
     size_t get_dim_alpha() const { return this->dim_alpha; };
     size_t get_dim_beta() const { return this->dim_beta; };
+    bmqc::AddressingScheme get_addressing_scheme_alpha() const { return this->addressing_scheme_alpha; }
+    bmqc::AddressingScheme get_addressing_scheme_beta() const { return this->addressing_scheme_beta; }
 
 
     // STATIC PUBLIC METHODS

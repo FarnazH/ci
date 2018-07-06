@@ -161,13 +161,13 @@ public:
         // Emplace-back this with the alpha-ONVs, beta-ONVs and coefficients
         // The convention that is used is that the alpha addresses are major, i.e. the beta addresses are contiguous
         //      I_alpha I_beta = I_alpha * dim_beta + I_beta
-        bmqc::SpinString<T> spin_string_alpha(1, this->K);  // FIXME: use address and addressing scheme, addressing scheme get_addressing_scheme maken
+        bmqc::SpinString<T> spin_string_alpha (0, fci.get_addressing_scheme_alpha());
         for (size_t I_alpha = 0; I_alpha < fci.get_dim_alpha(); I_alpha++) {
             if (I_alpha > 0) {
                 spin_string_alpha.nextPermutation();
             }
 
-            bmqc::SpinString<T> spin_string_beta(1, fci.get_K());
+            bmqc::SpinString<T> spin_string_beta (0, fci.get_addressing_scheme_beta());
             for (size_t I_beta = 0; I_beta < fci.get_dim_beta(); I_beta++) {
                 if (I_beta > 0) {
                     spin_string_beta.nextPermutation();
