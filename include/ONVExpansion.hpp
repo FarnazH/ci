@@ -422,31 +422,28 @@ public:
                 // 'Diagonal' elements of the 2-RDM: aaaa and aabb
                 if (alpha_I.isOccupied(p)) {
                     for (size_t q = 0; q < this->K; q++) {
-                        if (p == q) {  // can't create/annihilate the same orbital twice
-                            continue;
-                        }
-
                         if (beta_I.isOccupied(q)) {
                             this->two_rdm_aabb(p,p,q,q) += std::pow(c_I, 2);
-                        } else {
+                        }
+
+                        if (p != q) {  // can't create/annihilate the same orbital twice
                             if (alpha_I.isOccupied(q)) {
                                 this->two_rdm_aaaa(p,p,q,q) += std::pow(c_I, 2);
                                 this->two_rdm_aaaa(p,q,q,p) -= std::pow(c_I, 2);
                             }
                         }
+
                     }  // loop over q
                 }
 
                 // 'Diagonal' elements of the 2-RDM: bbbb and bbaa
                 if (beta_I.isOccupied(p)) {
                     for (size_t q = 0; q < this->K; q++) {
-                        if (p == q) {  // can't create/annihilate the same orbital twice
-                            continue;
-                        }
-
                         if (alpha_I.isOccupied(q)) {
                             this->two_rdm_bbaa(p,p,q,q) += std::pow(c_I, 2);
-                        } else {
+                        }
+
+                        if (p != q) {  // can't create/annihilate the same orbital twice
                             if (beta_I.isOccupied(q)) {
                                 this->two_rdm_bbbb(p,p,q,q) += std::pow(c_I, 2);
                                 this->two_rdm_bbbb(p,q,q,p) -= std::pow(c_I, 2);
@@ -478,20 +475,18 @@ public:
                     for (size_t r = 0; r < this->K; r++) {  // r loops over spatial orbitals
 
                         if (alpha_I.isOccupied(r) && alpha_J.isOccupied(r)) {  // r must be occupied on the left and on the right
-                            if ((p == r) || (q == r)) {  // can't create or annihilate the same orbital
-                                continue;
+                            if ((p != r) && (q != r)) {  // can't create or annihilate the same orbital
+                                // Fill in the 2-RDM contributions
+                                this->two_rdm_aaaa(p,q,r,r) += sign * c_I * c_J;
+                                this->two_rdm_aaaa(r,q,p,r) -= sign * c_I * c_J;
+                                this->two_rdm_aaaa(p,r,r,q) -= sign * c_I * c_J;
+                                this->two_rdm_aaaa(r,r,p,q) += sign * c_I * c_J;
+
+                                this->two_rdm_aaaa(q,p,r,r) += sign * c_I * c_J;
+                                this->two_rdm_aaaa(q,r,r,p) -= sign * c_I * c_J;
+                                this->two_rdm_aaaa(r,p,q,r) -= sign * c_I * c_J;
+                                this->two_rdm_aaaa(r,r,q,p) += sign * c_I * c_J;
                             }
-
-                            // Fill in the 2-RDM contributions
-                            this->two_rdm_aaaa(p,q,r,r) += sign * c_I * c_J;
-                            this->two_rdm_aaaa(r,q,p,r) -= sign * c_I * c_J;
-                            this->two_rdm_aaaa(p,r,r,q) -= sign * c_I * c_J;
-                            this->two_rdm_aaaa(r,r,p,q) += sign * c_I * c_J;
-
-                            this->two_rdm_aaaa(q,p,r,r) += sign * c_I * c_J;
-                            this->two_rdm_aaaa(q,r,r,p) -= sign * c_I * c_J;
-                            this->two_rdm_aaaa(r,p,q,r) -= sign * c_I * c_J;
-                            this->two_rdm_aaaa(r,r,q,p) += sign * c_I * c_J;
                         }
 
                         if (beta_I.isOccupied(r)) {  // beta_I == beta_J from the previous if-branch
@@ -521,20 +516,18 @@ public:
                     for (size_t r = 0; r < this->K; r++) {  // r loops over spatial orbitals
 
                         if (beta_I.isOccupied(r) && beta_J.isOccupied(r)) {  // r must be occupied on the left and on the right
-                            if ((p == r) || (q == r)) {  // can't create or annihilate the same orbital
-                                continue;
+                            if ((p != r) && (q != r)) {  // can't create or annihilate the same orbital
+                                // Fill in the 2-RDM contributions
+                                this->two_rdm_bbbb(p,q,r,r) += sign * c_I * c_J;
+                                this->two_rdm_bbbb(r,q,p,r) -= sign * c_I * c_J;
+                                this->two_rdm_bbbb(p,r,r,q) -= sign * c_I * c_J;
+                                this->two_rdm_bbbb(r,r,p,q) += sign * c_I * c_J;
+
+                                this->two_rdm_bbbb(q,p,r,r) += sign * c_I * c_J;
+                                this->two_rdm_bbbb(q,r,r,p) -= sign * c_I * c_J;
+                                this->two_rdm_bbbb(r,p,q,r) -= sign * c_I * c_J;
+                                this->two_rdm_bbbb(r,r,q,p) += sign * c_I * c_J;
                             }
-
-                            // Fill in the 2-RDM contributions
-                            this->two_rdm_bbbb(p,q,r,r) += sign * c_I * c_J;
-                            this->two_rdm_bbbb(r,q,p,r) -= sign * c_I * c_J;
-                            this->two_rdm_bbbb(p,r,r,q) -= sign * c_I * c_J;
-                            this->two_rdm_bbbb(r,r,p,q) += sign * c_I * c_J;
-
-                            this->two_rdm_bbbb(q,p,r,r) += sign * c_I * c_J;
-                            this->two_rdm_bbbb(q,r,r,p) -= sign * c_I * c_J;
-                            this->two_rdm_bbbb(r,p,q,r) -= sign * c_I * c_J;
-                            this->two_rdm_bbbb(r,r,q,p) += sign * c_I * c_J;
                         }
 
                         if (alpha_I.isOccupied(r)) {  // alpha_I == alpha_J from the previous if-branch
