@@ -20,4 +20,4 @@ find_package(bmqc 1.2.2 REQUIRED)
 find_package(numopt 1.4.0 REQUIRED)
 
 # Find cpputil
-find_package(cpputil 1.4.0 REQUIRED)
+find_package(cpputil 1.5.0 REQUIRED)
