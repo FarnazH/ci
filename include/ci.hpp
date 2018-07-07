@@ -23,6 +23,8 @@
 #include "BaseCI.hpp"
 #include "DOCI.hpp"
 #include "FCI.hpp"
+#include "ONVExpansion.hpp"
+#include "ONVExpansionComponent.hpp"
 
 #include "version.hpp"
 
