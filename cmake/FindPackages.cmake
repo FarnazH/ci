@@ -14,10 +14,10 @@ find_package(hf 3.1.0 REQUIRED)
 find_package(libwint 3.1.0 REQUIRED)
 
 # Find bmqc for bitset manipulations
-find_package(bmqc 1.0.1 REQUIRED)
+find_package(bmqc 1.2.2 REQUIRED)
 
 # Find numopt
-find_package(numopt 1.2.0 REQUIRED)  # FIXME: this should become 1.3.0
+find_package(numopt 1.4.0 REQUIRED)
 
 # Find cpputil
-find_package(cpputil 1.4.0 REQUIRED)
+find_package(cpputil 1.5.0 REQUIRED)

@@ -34,6 +34,8 @@ class BaseCI {
 protected:
 
     libwint::SOBasis& so_basis;
+    const size_t K;  // number of spatial orbitals
+
     numopt::eigenproblem::BaseEigenproblemSolver* eigensolver_ptr = nullptr;
 
     const size_t dim;  // the dimension of the CI space
@@ -94,6 +96,8 @@ public:
 
     // GETTERS
     size_t get_dim() const { return this->dim; }
+    size_t get_K() const { return this->K; }
+
     Eigen::VectorXd get_diagonal() const { return this->diagonal; }
 
     // GETTERS - EIGENPAIR
@@ -141,6 +145,11 @@ public:
      *  Providing a @param solver_options_ptr, find (the) lowest energy eigenpair(s) of the Hamiltonian
      */
     void solve(numopt::eigenproblem::BaseSolverOptions* solver_options_ptr);
+
+    /**
+     *  Return if the CI problem has been solved
+     */
+    bool is_solved() const { return this->eigensolver_ptr->is_solved(); }
 
     /**
      *  Calculate all the 1-RDMs.

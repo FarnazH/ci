@@ -28,7 +28,6 @@ namespace ci {
 
 class DOCI : public ci::BaseCI {
 private:
-    const size_t K;  // number of spatial orbitals
     const size_t N_P;  // number of electron pairs
     const bmqc::AddressingScheme addressing_scheme;
 
@@ -66,6 +65,10 @@ public:
 
     // DESTRUCTOR
     ~DOCI() override = default;
+
+
+    // GETTERS
+    bmqc::AddressingScheme get_addressing_scheme() const { return this->addressing_scheme; }
 
 
     // STATIC PUBLIC METHODS

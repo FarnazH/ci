@@ -36,6 +36,8 @@ set(PROJECT_INCLUDE_FILES
         ${PROJECT_INCLUDE_FOLDER}/ci.hpp
         ${PROJECT_INCLUDE_FOLDER}/DOCI.hpp
         ${PROJECT_INCLUDE_FOLDER}/FCI.hpp
+        ${PROJECT_INCLUDE_FOLDER}/ONVExpansion.hpp
+        ${PROJECT_INCLUDE_FOLDER}/ONVExpansionComponent.hpp
         ${PROJECT_INCLUDE_FOLDER}/version.hpp)
 
 # Find the tests folder
@@ -53,7 +55,11 @@ set(PROJECT_TEST_SOURCE_FILES
         ${PROJECT_TESTS_FOLDER}/FCI_Davidson_test.cpp
         ${PROJECT_TESTS_FOLDER}/FCI_RDM_test.cpp
         ${PROJECT_TESTS_FOLDER}/FCI_sparse_test.cpp
-        ${PROJECT_TESTS_FOLDER}/FCI_test.cpp)
+        ${PROJECT_TESTS_FOLDER}/FCI_test.cpp
+        ${PROJECT_TESTS_FOLDER}/ONVExpansion_dynamic_bitset_test.cpp
+        ${PROJECT_TESTS_FOLDER}/ONVExpansion_unsigned_test.cpp
+        ${PROJECT_TESTS_FOLDER}/ONVExpansionComponent_dynamic_bitset_test.cpp
+        ${PROJECT_TESTS_FOLDER}/ONVExpansionComponent_unsigned_test.cpp)
 
 # Find the executable folder
 set(PROJECT_EXECUTABLES_FOLDER ${CMAKE_SOURCE_DIR}/exe)

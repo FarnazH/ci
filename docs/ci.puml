@@ -128,8 +128,8 @@ namespace ci {
 
             # Eigen::VectorXd diagonal
 
-            # bool are_computed_one_rdms = false
-            # bool are_computed_two_rdms = false
+            # bool are_calculated_one_rdms = false
+            # bool are_calculated_two_rdms = false
 
             # Eigen::MatrixXd one_rdm_aa
             # Eigen::MatrixXd one_rdm_bb

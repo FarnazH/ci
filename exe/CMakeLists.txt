@@ -22,3 +22,7 @@ configure_executable(doci_rhf_10-3_50000.x)
 
 add_executable(doci_fno.x doci_fno_main.cpp)
 configure_executable(doci_fno.x)
+
+
+add_executable(expansion_dms.x expansion_dms.cpp)
+configure_executable(expansion_dms.x)
