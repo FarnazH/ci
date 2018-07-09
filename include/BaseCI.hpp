@@ -152,11 +152,6 @@ public:
     bool is_solved() const { return this->eigensolver_ptr->is_solved(); }
 
     /**
-     *  Return if the CI problem has been solved
-     */
-    bool is_solved() const { return this->eigensolver_ptr->is_solved(); }
-
-    /**
      *  Calculate all the 1-RDMs.
      */
     virtual void calculate1RDMs() = 0;

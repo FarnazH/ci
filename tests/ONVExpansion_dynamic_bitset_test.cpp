@@ -83,7 +83,8 @@ BOOST_AUTO_TEST_CASE ( constructor_fci_two_electrons_dynamic_bitset ) {
 
     // Do a dense FCI calculation based on a given SO basis
     ci::FCI fci (so_basis, 1, 1);  // N_alpha = 1, N_beta = 1
-    fci.solve(numopt::eigenproblem::SolverType::DENSE);
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    fci.solve(&dense_options);
 
     // Create the reference expansion (constructing the ONVExpansion manually)
     ci::ONVExpansion<boost::dynamic_bitset<>> ref_expansion {
@@ -119,7 +120,8 @@ BOOST_AUTO_TEST_CASE ( constructor_fci_four_electrons_dynamic_bitset ) {
 
     // Do a dense FCI calculation based on a given SO basis
     ci::FCI fci (so_basis, 2, 2);  // N_alpha = 2, N_beta = 2
-    fci.solve(numopt::eigenproblem::SolverType::DENSE);
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    fci.solve(&dense_options);
 
 
     // Create the reference expansion (constructing the ONVExpansion manually from the FCI calculation)
@@ -193,7 +195,8 @@ BOOST_AUTO_TEST_CASE ( constructor_doci_two_electrons_dynamic_bitset ) {
 
     // Do a dense FCI calculation based on a given SO basis
     ci::DOCI doci (so_basis, 2);  // 2 electrons
-    doci.solve(numopt::eigenproblem::SolverType::DENSE);
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    doci.solve(&dense_options);
 
 
     // Set up the reference ONV expansion
@@ -228,7 +231,8 @@ BOOST_AUTO_TEST_CASE ( constructor_doci_four_electrons_dynamic_bitset ) {
 
     // Do a dense FCI calculation based on a given SO basis
     ci::DOCI doci (so_basis, 4);  // 4 electrons
-    doci.solve(numopt::eigenproblem::SolverType::DENSE);
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    doci.solve(&dense_options);
 
 
     // Create the reference expansion (constructing the ONVExpansion manually from the DOCI calculation)
@@ -268,7 +272,8 @@ BOOST_AUTO_TEST_CASE ( one_rdms_fci_H2_6_31G_dynamic_bitset ) {
 
     // Do a dense FCI calculation based on a given SO basis
     ci::FCI fci (so_basis, 1, 1);  // N_alpha = 1, N_beta = 1
-    fci.solve(numopt::eigenproblem::SolverType::DENSE);
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    fci.solve(&dense_options);
 
     fci.calculate1RDMs();
     Eigen::MatrixXd ref_one_rdm_aa = fci.get_one_rdm_aa();
@@ -309,7 +314,8 @@ BOOST_AUTO_TEST_CASE ( two_rdms_fci_H2_6_31G_dynamic_bitset ) {
 
     // Do a dense FCI calculation based on a given SO basis
     ci::FCI fci (so_basis, 1, 1);  // N_alpha = 1, N_beta = 1
-    fci.solve(numopt::eigenproblem::SolverType::DENSE);
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    fci.solve(&dense_options);
 
     fci.calculate2RDMs();
     Eigen::Tensor<double, 4> ref_two_rdm_aaaa = fci.get_two_rdm_aaaa();
@@ -356,7 +362,8 @@ BOOST_AUTO_TEST_CASE ( one_rdms_fci_H2O_STO_3G_dynamic_bitset ) {
 
     // Do a dense FCI calculation based on a given SO basis
     ci::FCI fci (so_basis, 5, 5);  // N_alpha = 5, N_beta = 5
-    fci.solve(numopt::eigenproblem::SolverType::DENSE);
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    fci.solve(&dense_options);
 
 
     fci.calculate1RDMs();
@@ -399,7 +406,8 @@ BOOST_AUTO_TEST_CASE ( two_rdms_fci_H2O_STO_3G_dynamic_bitset ) {
 
     // Do a dense FCI calculation based on a given SO basis
     ci::FCI fci (so_basis, 5, 5);  // N_alpha = 5, N_beta = 5
-    fci.solve(numopt::eigenproblem::SolverType::DENSE);
+    numopt::eigenproblem::DenseSolverOptions dense_options;
+    fci.solve(&dense_options);
 
 
     fci.calculate2RDMs();
